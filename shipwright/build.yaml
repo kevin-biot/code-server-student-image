@@ -1,0 +1,19 @@
+apiVersion: shipwright.io/v1beta1
+kind: Build
+metadata:
+  name: code-server-student-image
+  namespace: devops
+spec:
+  source:
+    type: Git
+    git:
+      url: https://github.com/kevin-biot/code-server-student-image.git
+      contextDir: .
+  strategy:
+    name: buildah
+    kind: ClusterBuildStrategy
+  output:
+    image: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
+  paramValues:
+    - name: storage-driver
+      value: vfs
