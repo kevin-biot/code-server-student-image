@@ -1,8 +1,0 @@
-apiVersion: shipwright.io/v1beta1
-kind: BuildRun
-metadata:
-  generateName: code-server-student-image-
-  namespace: devops
-spec:
-  build:
-    name: code-server-student-image
