@@ -1,4 +1,4 @@
-FROM codercom/code-server:latest
+FROM ghcr.io/coder/code-server:latest
 
 USER root
 
