@@ -4,5 +4,5 @@ metadata:
   generateName: code-server-student-image-
   namespace: devops
 spec:
-  build:
+  buildRef:
     name: code-server-student-image
