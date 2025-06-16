@@ -3,6 +3,15 @@
 
 set -e
 
+# Verify required commands are available
+REQUIRED_CMDS=("oc" "openssl")
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: required command '$cmd' not found in PATH." >&2
+        exit 1
+    fi
+done
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_FILE="${SCRIPT_DIR}/student-template.yaml"
 CLUSTER_DOMAIN=${CLUSTER_DOMAIN:-"apps.cluster.local"}
