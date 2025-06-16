@@ -68,9 +68,12 @@ RUN npm install -g \
     yaml-lint \
     prettier
 
-# Install useful VS Code extensions
+# Install useful VS Code extensions as the coder user
+USER 1001
 RUN --mount=type=tmpfs,target=/tmp \
-    code-server --install-extension ms-python.python \
+    HOME=/home/coder code-server \
+    --user-data-dir /home/coder/.local/share/code-server \
+    --install-extension ms-python.python \
     --install-extension ms-vscode.vscode-json \
     --install-extension redhat.vscode-yaml \
     --install-extension ms-kubernetes-tools.vscode-kubernetes-tools \
@@ -79,6 +82,7 @@ RUN --mount=type=tmpfs,target=/tmp \
     --install-extension ms-vscode.vscode-typescript-next \
     --install-extension esbenp.prettier-vscode \
     --install-extension redhat.vscode-xml
+USER root
 
 # Create comprehensive workspace directory structure
 RUN mkdir -p /home/coder/workspace/projects \
