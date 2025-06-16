@@ -1,29 +1,46 @@
-# student-template.yaml - Use with 'oc process' for multiple students
+# Enhanced student-template.yaml with comprehensive DevOps tooling
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: code-server-student
+  name: devops-workshop-student
   namespace: devops
+  annotations:
+    description: "Complete DevOps workshop environment with Pulumi IaC, Tekton CI/CD, and GitOps"
+    tags: "workshop,devops,pulumi,tekton,argocd,java,nodejs,python"
+    iconClass: "icon-nodejs"
+
 objects:
+# Enhanced Namespace with labels
 - apiVersion: v1
   kind: Namespace
   metadata:
     name: ${STUDENT_NAME}
     labels:
       student: ${STUDENT_NAME}
+      workshop: "devops"
+      environment: "training"
+    annotations:
+      workshop.instructor/contact: "${INSTRUCTOR_EMAIL}"
+      workshop.student/level: "beginner"
 
+# Enhanced PVC for comprehensive workspace
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     name: code-server-pvc
     namespace: ${STUDENT_NAME}
+    labels:
+      app: code-server
+      student: ${STUDENT_NAME}
   spec:
     accessModes:
       - ReadWriteOnce
     resources:
       requests:
         storage: ${STORAGE_SIZE}
+    storageClassName: ${STORAGE_CLASS}
 
+# Enhanced ResourceQuota for DevOps workloads
 - apiVersion: v1
   kind: ResourceQuota
   metadata:
@@ -31,14 +48,23 @@ objects:
     namespace: ${STUDENT_NAME}
   spec:
     hard:
-      requests.cpu: "1"
-      requests.memory: 1Gi
-      limits.cpu: "2"
-      limits.memory: 2Gi
-      persistentvolumeclaims: "1"
-      pods: "5"
-      services: "2"
+      # Compute Resources (increased for CI/CD workloads)
+      requests.cpu: "2"
+      requests.memory: 4Gi
+      limits.cpu: "4"
+      limits.memory: 8Gi
+      
+      # Storage Resources
+      persistentvolumeclaims: "5"
+      requests.storage: 20Gi
+      
+      # Object Counts (increased for DevOps resources)
+      pods: "15"
+      services: "10"
+      secrets: "20"
+      configmaps: "20"
 
+# Enhanced LimitRange for better resource management
 - apiVersion: v1
   kind: LimitRange
   metadata:
@@ -48,21 +74,28 @@ objects:
     limits:
     - default:
         cpu: 500m
-        memory: 512Mi
+        memory: 1Gi
       defaultRequest:
         cpu: 100m
         memory: 256Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
       type: Container
     - max:
-        storage: 5Gi
+        storage: 10Gi
       min:
         storage: 1Gi
       type: PersistentVolumeClaim
 
+# Enhanced NetworkPolicy for workshop security
 - apiVersion: networking.k8s.io/v1
   kind: NetworkPolicy
   metadata:
-    name: student-isolation
+    name: student-network-policy
     namespace: ${STUDENT_NAME}
   spec:
     podSelector: {}
@@ -70,44 +103,92 @@ objects:
     - Ingress
     - Egress
     ingress:
+    # Allow OpenShift ingress
     - from:
       - namespaceSelector:
           matchLabels:
             name: openshift-ingress
-    - from: []
-      ports:
-      - protocol: TCP
-        port: 8080
+    # Allow monitoring
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: openshift-monitoring
+    # Allow same namespace communication
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            student: ${STUDENT_NAME}
+    # Allow ArgoCD access
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: argocd
     egress:
-    - {} # Allow all egress for now, restrict as needed
+    # Allow all egress (needed for git, registry, etc.)
+    - {}
 
+# Enhanced RBAC for DevOps operations
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: Role
   metadata:
     namespace: ${STUDENT_NAME}
-    name: student-role
+    name: devops-student-role
   rules:
+  # Core Kubernetes resources
   - apiGroups: [""]
-    resources: ["pods", "services", "configmaps", "secrets"]
-    verbs: ["get", "list", "create", "update", "patch", "delete"]
+    resources: ["pods", "services", "configmaps", "secrets", "persistentvolumeclaims"]
+    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log", "pods/status"]
+    verbs: ["get", "list", "watch"]
+  
+  # Apps resources
   - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
+  
+  # OpenShift specific resources
+  - apiGroups: ["route.openshift.io"]
+    resources: ["routes"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+  - apiGroups: ["image.openshift.io"]
+    resources: ["imagestreams", "imagestreamtags"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+  
+  # Networking
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
     verbs: ["get", "list", "create", "update", "patch", "delete"]
 
+# Enhanced RoleBinding
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   metadata:
-    name: student-binding
+    name: devops-student-binding
     namespace: ${STUDENT_NAME}
   subjects:
   - kind: ServiceAccount
     name: default
     namespace: ${STUDENT_NAME}
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: ${STUDENT_NAME}
   roleRef:
     kind: Role
-    name: student-role
+    name: devops-student-role
     apiGroup: rbac.authorization.k8s.io
 
+# Pipeline ServiceAccount for Tekton
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: pipeline
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: tekton
+      student: ${STUDENT_NAME}
+
+# Enhanced code-server deployment
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -116,6 +197,7 @@ objects:
     labels:
       app: code-server
       student: ${STUDENT_NAME}
+      component: development-environment
   spec:
     replicas: 1
     selector:
@@ -126,6 +208,8 @@ objects:
         labels:
           app: code-server
           student: ${STUDENT_NAME}
+        annotations:
+          workshop.devops/tools: "pulumi,tekton,argocd,java,nodejs,python"
       spec:
         securityContext:
           runAsUser: 1001
@@ -139,6 +223,12 @@ objects:
           env:
           - name: PASSWORD
             value: ${STUDENT_PASSWORD}
+          - name: STUDENT_NAMESPACE
+            value: ${STUDENT_NAME}
+          - name: PULUMI_SKIP_UPDATE_CHECK
+            value: "true"
+          - name: PULUMI_SKIP_CONFIRMATIONS
+            value: "true"
           resources:
             limits:
               memory: ${MEMORY_LIMIT}
@@ -207,19 +297,25 @@ parameters:
   value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
 - name: STORAGE_SIZE
   description: PVC storage size
-  value: 2Gi
+  value: 5Gi
+- name: STORAGE_CLASS
+  description: Storage class for PVC
+  value: gp3-csi
 - name: MEMORY_LIMIT
   description: Memory limit per student
-  value: 1Gi
+  value: 2Gi
 - name: MEMORY_REQUEST
   description: Memory request per student
-  value: 512Mi
+  value: 1Gi
 - name: CPU_LIMIT
   description: CPU limit per student
-  value: 500m
+  value: 1000m
 - name: CPU_REQUEST
   description: CPU request per student
-  value: 100m
+  value: 200m
 - name: CLUSTER_DOMAIN
   description: OpenShift cluster domain
   required: true
+- name: INSTRUCTOR_EMAIL
+  description: Instructor contact email
+  value: "instructor@workshop.example.com"
