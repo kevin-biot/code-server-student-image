@@ -3,6 +3,15 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Verify required commands are available
+REQUIRED_CMDS=("oc")
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "Error: required command '$cmd' not found in PATH." >&2
+        exit 1
+    fi
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
