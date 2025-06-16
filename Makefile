@@ -49,7 +49,11 @@ clean-all: ## Clean up ALL student environments (be careful!)
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ]
 	oc get namespaces -l student --no-headers -o custom-columns=":metadata.name" | xargs -I {} oc delete namespace {}
 
-test: ## Test deployment with a small number of students
+test: ## Run syntax checks and test deployment with a small number of students
+	@echo "Running shell script syntax checks..."
+	@command -v shellcheck >/dev/null 2>&1 && \
+	shellcheck deploy-students.sh monitor-students.sh git-push.sh startup.sh || \
+	bash -n deploy-students.sh monitor-students.sh git-push.sh startup.sh
 	@echo "Testing with 2 student environments..."
 	$(MAKE) STUDENT_COUNT=2 deploy
 	sleep 30
