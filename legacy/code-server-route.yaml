@@ -1,0 +1,14 @@
+# code-server-route.yaml
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: code-server
+  namespace: student02
+spec:
+  to:
+    kind: Service
+    name: code-server
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge

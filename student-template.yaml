@@ -1,0 +1,225 @@
+# student-template.yaml - Use with 'oc process' for multiple students
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: code-server-student
+  namespace: devops
+objects:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: code-server-pvc
+    namespace: ${STUDENT_NAME}
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE_SIZE}
+
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    name: student-quota
+    namespace: ${STUDENT_NAME}
+  spec:
+    hard:
+      requests.cpu: "1"
+      requests.memory: 1Gi
+      limits.cpu: "2"
+      limits.memory: 2Gi
+      persistentvolumeclaims: "1"
+      pods: "5"
+      services: "2"
+
+- apiVersion: v1
+  kind: LimitRange
+  metadata:
+    name: student-limits
+    namespace: ${STUDENT_NAME}
+  spec:
+    limits:
+    - default:
+        cpu: 500m
+        memory: 512Mi
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      type: Container
+    - max:
+        storage: 5Gi
+      min:
+        storage: 1Gi
+      type: PersistentVolumeClaim
+
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: student-isolation
+    namespace: ${STUDENT_NAME}
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Ingress
+    - Egress
+    ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: openshift-ingress
+    - from: []
+      ports:
+      - protocol: TCP
+        port: 8080
+    egress:
+    - {} # Allow all egress for now, restrict as needed
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    namespace: ${STUDENT_NAME}
+    name: student-role
+  rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "create", "update", "patch", "delete"]
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: student-binding
+    namespace: ${STUDENT_NAME}
+  subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: ${STUDENT_NAME}
+  roleRef:
+    kind: Role
+    name: student-role
+    apiGroup: rbac.authorization.k8s.io
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: code-server
+      student: ${STUDENT_NAME}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: code-server
+    template:
+      metadata:
+        labels:
+          app: code-server
+          student: ${STUDENT_NAME}
+      spec:
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001
+        containers:
+        - name: code-server
+          image: ${IMAGE_NAME}
+          ports:
+          - containerPort: 8080
+          env:
+          - name: PASSWORD
+            value: ${STUDENT_PASSWORD}
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
+            requests:
+              memory: ${MEMORY_REQUEST}
+              cpu: ${CPU_REQUEST}
+          volumeMounts:
+          - name: data
+            mountPath: /home/coder
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: code-server-pvc
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+  spec:
+    selector:
+      app: code-server
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 8080
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+  spec:
+    host: ${STUDENT_NAME}-code-server.${CLUSTER_DOMAIN}
+    to:
+      kind: Service
+      name: code-server
+    port:
+      targetPort: 8080
+    tls:
+      termination: edge
+
+parameters:
+- name: STUDENT_NAME
+  description: Student identifier (e.g., student01, student02)
+  required: true
+- name: STUDENT_PASSWORD
+  description: Password for code-server access
+  generate: expression
+  from: '[a-zA-Z0-9]{12}'
+- name: IMAGE_NAME
+  description: Code-server image name
+  value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
+- name: STORAGE_SIZE
+  description: PVC storage size
+  value: 2Gi
+- name: MEMORY_LIMIT
+  description: Memory limit per student
+  value: 1Gi
+- name: MEMORY_REQUEST
+  description: Memory request per student
+  value: 512Mi
+- name: CPU_LIMIT
+  description: CPU limit per student
+  value: 500m
+- name: CPU_REQUEST
+  description: CPU request per student
+  value: 100m
+- name: CLUSTER_DOMAIN
+  description: OpenShift cluster domain
+  required: true

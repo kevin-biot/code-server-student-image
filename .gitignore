@@ -1,0 +1,32 @@
+# Ignore build artifacts
+*.log
+*.tmp
+
+# Ignore backup files
+*-backup-*
+student-credentials-backup-*
+
+# Ignore temporary deployment files
+temp-*.yaml
+.tmp/
+
+# Ignore editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore local development
+docker-compose.override.yml
+.env.local
+
+# Keep the actual credentials file for now, but ignore sensitive backups
+# student-credentials.txt
+
+# Ignore any local test files
+test-*
+local-*

@@ -1,0 +1,13 @@
+# code-server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-server
+  namespace: student02
+spec:
+  selector:
+    app: code-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
