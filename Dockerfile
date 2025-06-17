@@ -1,5 +1,8 @@
 FROM ghcr.io/coder/code-server:latest
 
+ARG ARCH=x86_64
+ENV TOOL_ARCH=${ARCH}
+
 USER root
 
 # Install comprehensive development tools
@@ -22,19 +25,19 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install yq for YAML processing
-RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TOOL_ARCH} \
     && chmod +x /usr/local/bin/yq
 
 # Install kubectl and oc CLI
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${TOOL_ARCH}/kubectl" \
     && chmod +x kubectl && mv kubectl /usr/local/bin/ \
-    && curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz \
+    && curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${TOOL_ARCH}/openshift-client-linux.tar.gz \
     | tar -xzC /usr/local/bin/ oc kubectl
 
 # Install Tekton CLI
-RUN curl -LO https://github.com/tektoncd/cli/releases/latest/download/tkn_Linux_x86_64.tar.gz \
-    && tar xvzf tkn_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn \
-    && rm tkn_Linux_x86_64.tar.gz \
+RUN curl -LO https://github.com/tektoncd/cli/releases/latest/download/tkn_Linux_${TOOL_ARCH}.tar.gz \
+    && tar xvzf tkn_Linux_${TOOL_ARCH}.tar.gz -C /usr/local/bin/ tkn \
+    && rm tkn_Linux_${TOOL_ARCH}.tar.gz \
     && chmod +x /usr/local/bin/tkn
 
 # Install Helm
@@ -46,7 +49,7 @@ RUN curl -fsSL https://get.pulumi.com | sh \
     && chmod +x /usr/local/bin/pulumi
 
 # Install ArgoCD CLI
-RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 \
+RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-${TOOL_ARCH} \
     && chmod +x /usr/local/bin/argocd
 
 # Install additional Python packages for DevOps

@@ -19,6 +19,8 @@ The project uses Shipwright for automated builds:
 ```bash
 ./build-and-verify.sh
 ```
+The script detects whether you are on an `x86_64` or `arm64` system and passes
+the correct architecture to Shipwright so multi-arch builds work out of the box.
 
 ### 2. Deploy Students
 

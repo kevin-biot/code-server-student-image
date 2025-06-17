@@ -10,6 +10,8 @@
 ```bash
 ./build-and-verify.sh
 ```
+The script automatically normalizes your system architecture and triggers the
+build with the appropriate `ARCH` value for multi-arch support.
 
 ## 2. Deploy Student Environments
 
