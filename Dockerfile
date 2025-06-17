@@ -79,10 +79,9 @@ USER root
 RUN HOME=/home/coder code-server \
     --user-data-dir /home/coder/.local/share/code-server \
     --install-extension ms-python.python \
-    --install-extension ms-vscode.vscode-json \
     --install-extension redhat.vscode-yaml \
     --install-extension ms-kubernetes-tools.vscode-kubernetes-tools \
-    --install-extension ms-vscode.vscode-docker \
+    --install-extension ms-azuretools.vscode-docker \
     --install-extension vscjava.vscode-java-pack \
     --install-extension ms-vscode.vscode-typescript-next \
     --install-extension esbenp.prettier-vscode \
