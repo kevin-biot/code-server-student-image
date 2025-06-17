@@ -35,12 +35,17 @@ chmod +x deploy-students.sh
 # Deploy 5 students (student01-student05)
 ./deploy-students.sh -n 5 -d apps.your-cluster.com
 
+# Force redeploy if namespaces already exist
+./deploy-students.sh -n 5 -d apps.your-cluster.com --force
+
 # Deploy specific students
 ./deploy-students.sh -s alice,bob,charlie -d apps.your-cluster.com
 
 # Clean up environments
 ./deploy-students.sh -n 5 --cleanup
 ```
+
+If a student's namespace already exists, the script logs a warning and skips deployment. Use `--force` to redeploy.
 
 ### 3. Access Student Environments
 

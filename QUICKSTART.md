@@ -29,9 +29,14 @@ chmod +x deploy-students.sh monitor-students.sh
 # Deploy 5 students with your cluster domain
 ./deploy-students.sh -n 5 -d apps.your-cluster-domain.com
 
+# Force redeploy if namespaces already exist
+./deploy-students.sh -n 5 -d apps.your-cluster-domain.com --force
+
 # Check deployment status
 ./monitor-students.sh
 ```
+
+If a namespace already exists, deployment is skipped unless you use `--force`.
 
 ### Option B: Using Make (if you have make installed)
 ```bash

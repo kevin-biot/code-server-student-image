@@ -46,6 +46,7 @@ Options:
     -d, --domain DOMAIN     OpenShift cluster domain (default: apps.cluster.local)
     -i, --image IMAGE       Code-server image to use
     --cleanup               Clean up (delete) student environments
+    -f, --force             Redeploy even if namespace already exists
     -h, --help              Show this help message
 
 Examples:
@@ -99,6 +100,7 @@ STUDENTS=""
 NUMBER=""
 IMAGE_NAME=""
 CLEANUP=false
+FORCE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -120,6 +122,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --cleanup)
             CLEANUP=true
+            shift
+            ;;
+        -f|--force)
+            FORCE=true
             shift
             ;;
         -h|--help)
@@ -174,6 +180,17 @@ for student in "${student_list[@]}"; do
     if [[ "${CLEANUP}" == "true" ]]; then
         cleanup_student "${student}"
     else
+        # Check if the namespace already exists and skip unless forcing.
+        # Example: oc get namespace "${student}" >/dev/null 2>&1
+        if oc get namespace "${student}" >/dev/null 2>&1; then
+            if [[ "${FORCE}" != "true" ]]; then
+                warn "Namespace ${student} already exists. Skipping deployment. Use --force to redeploy."
+                continue
+            else
+                warn "Namespace ${student} already exists but --force specified. Redeploying."
+            fi
+        fi
+
         password=$(generate_password)
         deploy_student "${student}" "${password}"
         
