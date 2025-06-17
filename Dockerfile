@@ -75,9 +75,8 @@ RUN echo "[INFO] Dumping tool versions for verification:" && \
     pulumi version || echo "pulumi missing"
 
 # VS Code Extensions
-USER 1001
-RUN --mount=type=tmpfs,target=/tmp \
-    HOME=/home/coder code-server \
+USER root
+RUN HOME=/home/coder code-server \
     --user-data-dir /home/coder/.local/share/code-server \
     --install-extension ms-python.python \
     --install-extension ms-vscode.vscode-json \
@@ -88,7 +87,7 @@ RUN --mount=type=tmpfs,target=/tmp \
     --install-extension ms-vscode.vscode-typescript-next \
     --install-extension esbenp.prettier-vscode \
     --install-extension redhat.vscode-xml
-USER root
+USER 1001
 
 # Workspace directory structure
 RUN mkdir -p /home/coder/workspace/projects \
