@@ -15,9 +15,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[INFO] Applying Shipwright configuration..."
 oc apply -f "${SCRIPT_DIR}/shipwright/build.yaml"
 
+# Determine architecture for build argument
+detected_arch=$(uname -m)
+case "${detected_arch}" in
+    amd64|x86_64)
+        build_arch="x86_64"
+        ;;
+    arm64|aarch64)
+        build_arch="arm64"
+        ;;
+    *)
+        echo "Unsupported architecture: ${detected_arch}" >&2
+        exit 1
+        ;;
+esac
+
 # Start the build and capture the buildrun name
-echo "[INFO] Starting build..."
-buildrun_full=$(oc create -f "${SCRIPT_DIR}/shipwright/buildrun.yaml" -o name)
+echo "[INFO] Starting build for ${build_arch}..."
+buildrun_full=$(sed "s/ARCH_PLACEHOLDER/${build_arch}/" "${SCRIPT_DIR}/shipwright/buildrun.yaml" | oc create -f - -o name)
 buildrun_name=${buildrun_full#*/}
 
 echo "[INFO] Waiting for buildrun ${buildrun_name} to succeed..."
