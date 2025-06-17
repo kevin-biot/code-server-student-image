@@ -1,51 +1,90 @@
 #!/bin/bash
-# build-and-verify.sh - Build the code-server image and verify the output image stream
+# build-and-verify.sh - Build the code-server image via Shipwright and verify output
+set -euo pipefail
 
-set -e
+echo "🔍 [INFO] Running preflight checks..."
 
-# Verify required commands are available
-if ! command -v oc >/dev/null 2>&1; then
-    echo "Error: required command 'oc' not found in PATH." >&2
+# === Preflight Checks ===
+REQUIRED_CMDS=(oc sed uname)
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "${cmd}" &>/dev/null; then
+        echo "❌ [ERROR] Required command '${cmd}' not found in PATH."
+        exit 1
+    fi
+done
+
+if ! oc whoami &>/dev/null; then
+    echo "❌ [ERROR] 'oc' is not logged in or cluster not reachable."
     exit 1
 fi
 
+if ! oc get namespace devops &>/dev/null; then
+    echo "❌ [ERROR] Required namespace 'devops' not found."
+    exit 1
+fi
+
+echo "✅ [INFO] Preflight checks passed."
+
+# === Setup Variables ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_TIMEOUT="${BUILD_TIMEOUT:-600s}"  # 10 minutes default
 
-# Apply Shipwright build configuration
-echo "[INFO] Applying Shipwright configuration..."
-oc apply -f "${SCRIPT_DIR}/shipwright/build.yaml"
-
-# Determine architecture for build argument
+# === Detect Architecture ===
 detected_arch=$(uname -m)
 case "${detected_arch}" in
-    amd64|x86_64)
-        build_arch="x86_64"
-        ;;
-    arm64|aarch64)
-        build_arch="arm64"
-        ;;
-    *)
-        echo "Unsupported architecture: ${detected_arch}" >&2
-        exit 1
-        ;;
+    amd64|x86_64) build_arch="x86_64" ;;
+    arm64|aarch64) build_arch="arm64" ;;
+    *) echo "❌ [ERROR] Unsupported architecture: ${detected_arch}" >&2; exit 1 ;;
 esac
+echo "🖥️ [INFO] Detected architecture: ${detected_arch} → using build_arch: ${build_arch}"
 
-# Start the build and capture the buildrun name
-echo "[INFO] Starting build for ${build_arch}..."
+# === Apply Shipwright Build ===
+echo "📦 [INFO] Applying Shipwright Build definition..."
+oc apply -f "${SCRIPT_DIR}/shipwright/build.yaml"
+
+# === Start BuildRun ===
+echo "🚀 [INFO] Creating BuildRun..."
 buildrun_full=$(sed "s/ARCH_PLACEHOLDER/${build_arch}/" "${SCRIPT_DIR}/shipwright/buildrun.yaml" | oc create -f - -o name)
 buildrun_name=${buildrun_full#*/}
 
-echo "[INFO] Waiting for buildrun ${buildrun_name} to succeed..."
-if ! oc wait --for=condition=Succeeded=true --timeout=10m "buildrun/${buildrun_name}" -n devops; then
-    echo "[ERROR] Build failed. Fetching logs..."
-    oc logs "buildrun/${buildrun_name}" -n devops || true
+echo "🔄 [INFO] BuildRun started: ${buildrun_name}"
+
+# === Pod Discovery and Phase Monitor ===
+echo "⏳ [INFO] Waiting for associated pod to be scheduled..."
+for i in {1..20}; do
+    pod_name=$(oc get pods -l buildrun="${buildrun_name}" -n devops -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+    [[ -n "$pod_name" ]] && break
+    sleep 3
+done
+
+if [[ -n "${pod_name:-}" ]]; then
+    echo "🔍 [INFO] Found pod: ${pod_name} - monitoring phase..."
+    oc get pod "${pod_name}" -n devops -w --timeout=60s || true
+else
+    echo "⚠️  [WARN] No pod found yet for BuildRun '${buildrun_name}'."
+fi
+
+# === Wait for BuildRun Completion ===
+echo "⏱️  [INFO] Waiting up to ${BUILD_TIMEOUT} for BuildRun to complete..."
+if ! oc wait --for=condition=Succeeded=true --timeout="${BUILD_TIMEOUT}" "buildrun/${buildrun_name}" -n devops; then
+    echo "❌ [ERROR] BuildRun ${buildrun_name} failed or timed out."
+
+    echo "📋 [INFO] Attempting to get BuildRun logs..."
+    oc logs "buildrun/${buildrun_name}" -n devops || echo "⚠️ No BuildRun logs available."
+
+    echo "📋 [INFO] Attempting to get pod logs..."
+    oc get pods -l buildrun="${buildrun_name}" -n devops -o name | while read -r pod; do
+        echo "📄 Logs for ${pod}:"
+        oc logs "${pod}" -n devops --all-containers=true || true
+    done
+
     exit 1
 fi
 
-# Verify the image exists
-if oc get istag code-server-student:latest -n devops >/dev/null 2>&1; then
-    echo "[INFO] Build completed successfully and image tag exists."
+# === Verify Image Tag ===
+if oc get istag code-server-student:latest -n devops &>/dev/null; then
+    echo "✅ [SUCCESS] Build completed and image tag 'code-server-student:latest' exists in 'devops'."
 else
-    echo "[ERROR] Image tag code-server-student:latest not found in devops namespace." >&2
+    echo "❌ [ERROR] Image tag 'code-server-student:latest' not found in 'devops' namespace."
     exit 1
 fi
