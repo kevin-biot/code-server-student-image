@@ -13,25 +13,22 @@ ENV PULUMI_SKIP_CONFIRMATIONS=true
 
 USER root
 
-# Install core development tools and runtimes
+# Core dev tools
 RUN apt-get update && apt-get install -y \
     git vim nano unzip curl wget tree htop procps \
     build-essential \
     python3 python3-pip python3-venv \
     nodejs npm \
     openjdk-17-jdk maven gradle \
-    docker.io \
-    netcat-openbsd telnet dnsutils \
+    netcat-openbsd dnsutils \
     jq bash-completion \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# --- CLI Tools Section ---
-
-# yq for YAML processing (Linux ARM64/x86 universal binary)
+# yq (YAML processor)
 RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} \
     && chmod +x /usr/local/bin/yq
 
-# kubectl + oc CLI
+# oc and kubectl
 RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux-${ARCH}.tar.gz \
     && tar -xzvf openshift-client-linux-${ARCH}.tar.gz -C /usr/local/bin oc kubectl \
     && rm openshift-client-linux-${ARCH}.tar.gz
@@ -52,16 +49,16 @@ RUN ARCH=$(uname -m) && \
 # Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# Pulumi
+# Pulumi CLI
 RUN curl -fsSL https://get.pulumi.com | sh \
     && cp $HOME/.pulumi/bin/pulumi /usr/local/bin/ \
     && chmod +x /usr/local/bin/pulumi
 
-# ArgoCD CLI (Linux binaries)
+# ArgoCD CLI
 RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} \
     && chmod +x /usr/local/bin/argocd
 
-# --- Diagnostics Block ---
+# Tool diagnostics
 RUN echo "[INFO] Dumping tool versions for verification:" && \
     node -v && npm -v && \
     python3 --version && pip3 --version && \
@@ -75,7 +72,6 @@ RUN echo "[INFO] Dumping tool versions for verification:" && \
     pulumi version || echo "pulumi missing"
 
 # VS Code Extensions
-USER root
 RUN HOME=/home/coder code-server \
     --user-data-dir /home/coder/.local/share/code-server \
     --install-extension ms-python.python \
@@ -86,9 +82,10 @@ RUN HOME=/home/coder code-server \
     --install-extension ms-vscode.vscode-typescript-next \
     --install-extension esbenp.prettier-vscode \
     --install-extension redhat.vscode-xml
+
 USER 1001
 
-# Workspace directory structure
+# Create workspace
 RUN mkdir -p /home/coder/workspace/projects \
     /home/coder/workspace/labs/day1-pulumi \
     /home/coder/workspace/labs/day2-tekton \
@@ -97,7 +94,7 @@ RUN mkdir -p /home/coder/workspace/projects \
     /home/coder/workspace/templates \
     /home/coder/.local/bin
 
-# Bash completions and aliases
+# Bash enhancements
 RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc && \
     echo 'source <(kubectl completion bash)' >> /home/coder/.bashrc && \
     echo 'source <(tkn completion bash)' >> /home/coder/.bashrc && \
@@ -106,19 +103,16 @@ RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc && \
     echo 'alias k=kubectl' >> /home/coder/.bashrc && \
     echo 'complete -F __start_kubectl k' >> /home/coder/.bashrc
 
-# Git config template and startup script
+# Configs and templates
 COPY --chown=1001:1001 gitconfig-template /home/coder/.gitconfig-template
 COPY --chown=1001:1001 startup.sh /home/coder/startup.sh
-RUN chmod +x /home/coder/startup.sh
-
-# Templates
 COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/ || true
 
-# Final permissions and workspace
-RUN chown -R 1001:1001 /home/coder && chmod -R 755 /home/coder
+RUN chmod +x /home/coder/startup.sh && \
+    chown -R 1001:1001 /home/coder && \
+    chmod -R 755 /home/coder
 
 USER 1001
 WORKDIR /home/coder/workspace
 
-# Resilient startup
 ENTRYPOINT ["/bin/bash", "-c", "/home/coder/startup.sh || exec bash"]
