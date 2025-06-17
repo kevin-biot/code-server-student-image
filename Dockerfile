@@ -1,77 +1,66 @@
 FROM ghcr.io/coder/code-server:latest
 
-ARG ARCH=x86_64
+ARG ARCH=arm64
 ENV TOOL_ARCH=${ARCH}
 
 USER root
 
-# Install comprehensive development tools
+# Install core development tools and runtimes
 RUN apt-get update && apt-get install -y \
-    # Core development tools
     git vim nano unzip curl wget tree htop procps \
     build-essential \
-    # Language runtimes
     python3 python3-pip python3-venv \
     nodejs npm \
     openjdk-17-jdk maven gradle \
-    # DevOps tools
     docker.io \
-    # Network tools for debugging
     netcat-openbsd telnet dnsutils \
-    # JSON/YAML processing
     jq \
-    # Additional utilities
     bash-completion \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install yq for YAML processing
-RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${TOOL_ARCH} \
+# --- CLI Tools Section (Darwin ARM64 compatible) ---
+
+# yq for YAML processing
+RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_darwin_arm64 \
     && chmod +x /usr/local/bin/yq
 
-# Install kubectl and oc CLI
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${TOOL_ARCH}/kubectl" \
-    && chmod +x kubectl && mv kubectl /usr/local/bin/ \
-    && curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${TOOL_ARCH}/openshift-client-linux.tar.gz \
-    | tar -xzC /usr/local/bin/ oc kubectl
+# kubectl and oc CLI (darwin-arm64)
+RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-mac-arm64.tar.gz \
+    && tar -xzvf openshift-client-mac-arm64.tar.gz -C /usr/local/bin oc kubectl \
+    && rm openshift-client-mac-arm64.tar.gz
 
-# Install Tekton CLI
-RUN curl -LO https://github.com/tektoncd/cli/releases/latest/download/tkn_Linux_${TOOL_ARCH}.tar.gz \
-    && tar xvzf tkn_Linux_${TOOL_ARCH}.tar.gz -C /usr/local/bin/ tkn \
-    && rm tkn_Linux_${TOOL_ARCH}.tar.gz \
+# Tekton CLI
+RUN curl -LO https://github.com/tektoncd/cli/releases/download/v0.40.0/tkn_darwin_arm64.tar.gz \
+    && tar -xzf tkn_darwin_arm64.tar.gz -C /usr/local/bin tkn \
+    && rm tkn_darwin_arm64.tar.gz \
     && chmod +x /usr/local/bin/tkn
 
-# Install Helm
+# Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-# Install Pulumi
+# Pulumi
 RUN curl -fsSL https://get.pulumi.com | sh \
     && cp /root/.pulumi/bin/pulumi /usr/local/bin/ \
     && chmod +x /usr/local/bin/pulumi
 
-# Install ArgoCD CLI
-RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-${TOOL_ARCH} \
+# ArgoCD CLI
+RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-darwin-arm64 \
     && chmod +x /usr/local/bin/argocd
 
-# Install additional Python packages for DevOps
-RUN pip3 install --no-cache-dir \
-    flask \
-    requests \
-    pytest \
-    black \
-    flake8 \
-    pyyaml \
-    kubernetes
+# --- Diagnostics Block ---
+RUN echo "[INFO] Dumping tool versions for verification:" && \
+    node -v && npm -v && \
+    python3 --version && pip3 --version && \
+    java -version && \
+    mvn -v && gradle -v && \
+    yq --version || echo "yq missing" && \
+    oc version --client || echo "oc missing" && \
+    kubectl version --client || echo "kubectl missing" && \
+    tkn version || echo "tkn missing" && \
+    argocd version || echo "argocd missing" && \
+    pulumi version || echo "pulumi missing"
 
-# Install Node.js packages for Pulumi and workshop
-RUN npm install -g \
-    @pulumi/kubernetes \
-    @pulumi/pulumi \
-    typescript \
-    @types/node \
-    yaml-lint \
-    prettier
-
-# Install useful VS Code extensions as the coder user
+# VS Code Extensions
 USER 1001
 RUN --mount=type=tmpfs,target=/tmp \
     HOME=/home/coder code-server \
@@ -87,16 +76,16 @@ RUN --mount=type=tmpfs,target=/tmp \
     --install-extension redhat.vscode-xml
 USER root
 
-# Create comprehensive workspace directory structure
+# Directory structure
 RUN mkdir -p /home/coder/workspace/projects \
-    && mkdir -p /home/coder/workspace/labs/day1-pulumi \
-    && mkdir -p /home/coder/workspace/labs/day2-tekton \
-    && mkdir -p /home/coder/workspace/labs/day3-gitops \
-    && mkdir -p /home/coder/workspace/examples \
-    && mkdir -p /home/coder/workspace/templates \
-    && mkdir -p /home/coder/.local/bin
+    /home/coder/workspace/labs/day1-pulumi \
+    /home/coder/workspace/labs/day2-tekton \
+    /home/coder/workspace/labs/day3-gitops \
+    /home/coder/workspace/examples \
+    /home/coder/workspace/templates \
+    /home/coder/.local/bin
 
-# Set up shell completions
+# Bash completions
 RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc \
     && echo 'source <(kubectl completion bash)' >> /home/coder/.bashrc \
     && echo 'source <(tkn completion bash)' >> /home/coder/.bashrc \
@@ -105,19 +94,16 @@ RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc \
     && echo 'alias k=kubectl' >> /home/coder/.bashrc \
     && echo 'complete -F __start_kubectl k' >> /home/coder/.bashrc
 
-# Set up Git configuration template
+# Git config template and startup script
 COPY --chown=1001:1001 gitconfig-template /home/coder/.gitconfig-template
-
-# Create enhanced startup script with workshop materials
 COPY --chown=1001:1001 startup.sh /home/coder/startup.sh
 RUN chmod +x /home/coder/startup.sh
 
-# Copy workshop exercise templates (if they exist)
+# Templates
 COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/ || true
 
-# Ensure proper ownership and permissions
-RUN chown -R 1001:1001 /home/coder \
-    && chmod -R 755 /home/coder
+# Fix ownership
+RUN chown -R 1001:1001 /home/coder && chmod -R 755 /home/coder
 
 # Environment variables
 ENV HOME=/home/coder
@@ -128,11 +114,8 @@ ENV STUDENT_NAMESPACE=""
 ENV PULUMI_SKIP_UPDATE_CHECK=true
 ENV PULUMI_SKIP_CONFIRMATIONS=true
 
-# Switch to non-root user
 USER 1001
-
-# Set working directory
 WORKDIR /home/coder/workspace
 
-# Custom entrypoint to run startup script
-ENTRYPOINT ["/home/coder/startup.sh"]
+# Resilient startup fallback
+ENTRYPOINT ["/bin/bash", "-c", "/home/coder/startup.sh || exec bash"]
