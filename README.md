@@ -17,11 +17,7 @@ A self-contained OpenShift deployment for providing individual code-server envir
 The project uses Shipwright for automated builds:
 
 ```bash
-# Apply the build configuration
-oc apply -f shipwright/
-
-# Trigger a build
-oc create -f shipwright/buildrun.yaml
+./build-and-verify.sh
 ```
 
 ### 2. Deploy Students
