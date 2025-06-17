@@ -54,7 +54,7 @@ RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | b
 
 # Pulumi
 RUN curl -fsSL https://get.pulumi.com | sh \
-    && cp /root/.pulumi/bin/pulumi /usr/local/bin/ \
+    && cp $HOME/.pulumi/bin/pulumi /usr/local/bin/ \
     && chmod +x /usr/local/bin/pulumi
 
 # ArgoCD CLI (Linux binaries)
