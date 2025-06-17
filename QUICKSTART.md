@@ -8,15 +8,7 @@
 ## 1. Build the Image (First Time)
 
 ```bash
-# Apply the Shipwright build configuration
-oc apply -f shipwright/
-
-# Trigger the build
-oc create -f shipwright/buildrun.yaml
-
-# Monitor the build (replace xxxxx with actual buildrun name)
-oc get buildruns -n devops
-oc logs -f buildrun/code-server-student-image-xxxxx -n devops
+./build-and-verify.sh
 ```
 
 ## 2. Deploy Student Environments
