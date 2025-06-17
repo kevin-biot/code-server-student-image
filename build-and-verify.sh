@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Apply Shipwright build configuration
 echo "[INFO] Applying Shipwright configuration..."
-oc apply -f "${SCRIPT_DIR}/shipwright/"
+oc apply -f "${SCRIPT_DIR}/shipwright/build.yaml"
 
 # Start the build and capture the buildrun name
 echo "[INFO] Starting build..."
