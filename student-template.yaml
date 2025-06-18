@@ -297,7 +297,7 @@ parameters:
   value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
 - name: STORAGE_SIZE
   description: PVC storage size
-  value: 5Gi
+  value: 1Gi
 - name: STORAGE_CLASS
   description: Storage class for PVC
   value: gp3-csi

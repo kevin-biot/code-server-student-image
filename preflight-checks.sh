@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-echo "[INFO] Starting Darwin-based build verification"
+OS_NAME=$(uname -s)
+echo "[INFO] Starting build verification on ${OS_NAME}"
 
 # === Preflight CLI Checks ===
 for cmd in oc kubectl tkn yq argocd pulumi; do

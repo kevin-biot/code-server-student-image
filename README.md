@@ -60,6 +60,12 @@ After deployment, each student will have:
 
 **For students new to code-server/VS Code**: Direct them to click on `STUDENT-QUICK-START.md` in their workspace file explorer for a complete tutorial on using the environment.
 
+### 4. Populate Workspace with Workshop Repos (optional)
+Run the helper script inside a student terminal to clone the training repositories:
+```bash
+./clone-workshop-repos.sh
+```
+
 ## Architecture
 
 ### Image Contents
@@ -81,9 +87,9 @@ Each student gets their own namespace with:
 ## Configuration
 
 ### Resource Limits (per student)
-- **CPU**: 100m request, 500m limit
-- **Memory**: 512Mi request, 1Gi limit
-- **Storage**: 2Gi persistent volume
+- **CPU**: 200m request, 1000m limit
+- **Memory**: 1Gi request, 2Gi limit
+- **Storage**: 1Gi persistent volume
 - **Pods**: Maximum 5 pods per namespace
 
 ### Customization
@@ -165,4 +171,4 @@ Remove all student environments:
 
 ## License
 
-This project is open source. Please ensure compliance with all included software licenses.
+This project is licensed under the [MIT License](LICENSE).
