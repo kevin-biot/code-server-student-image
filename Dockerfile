@@ -90,28 +90,17 @@ RUN mkdir -p /home/coder/workspace/projects \
     /home/coder/workspace/labs/day3-gitops \
     /home/coder/workspace/examples \
     /home/coder/workspace/templates \
-    /home/coder/.local/bin \
-    && chown -R 1001:0 /home/coder
-
-USER 1001
-
-# Bash enhancements
-RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc && \
-    echo 'source <(kubectl completion bash)' >> /home/coder/.bashrc && \
-    echo 'source <(tkn completion bash)' >> /home/coder/.bashrc && \
-    echo 'source <(helm completion bash)' >> /home/coder/.bashrc && \
-    echo 'source <(argocd completion bash)' >> /home/coder/.bashrc && \
-    echo 'alias k=kubectl' >> /home/coder/.bashrc && \
-    echo 'complete -F __start_kubectl k' >> /home/coder/.bashrc
+    /home/coder/.local/bin
 
 # Configs and templates
 COPY --chown=1001:1001 gitconfig-template /home/coder/.gitconfig-template
 COPY --chown=1001:1001 startup.sh /home/coder/startup.sh
 COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/
 
+# Final fix: ensure scripts are executable and ownership is clean for key dirs
 RUN chmod +x /home/coder/startup.sh && \
-    chown -R 1001:1001 /home/coder && \
-    chmod -R 755 /home/coder
+    chown -R 1001:1001 /home/coder/workspace /home/coder/.local/bin /home/coder/.gitconfig-template /home/coder/startup.sh && \
+    chmod -R 755 /home/coder/workspace /home/coder/startup.sh
 
 USER 1001
 WORKDIR /home/coder/workspace
