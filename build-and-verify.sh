@@ -27,7 +27,7 @@ echo "✅ [INFO] Preflight checks passed."
 
 # === Setup Variables ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUILD_TIMEOUT="${BUILD_TIMEOUT:-600s}"  # 10 minutes default
+BUILD_TIMEOUT="${BUILD_TIMEOUT:-1200s}"  # 20 minutes default
 
 # === Detect Architecture ===
 detected_arch=$(uname -m)
