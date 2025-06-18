@@ -21,8 +21,8 @@ RUN apt-get update && apt-get install -y \
     nodejs npm \
     openjdk-17-jdk maven gradle \
     netcat-openbsd dnsutils \
-    jq bash-completion \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    jq bash-completion && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # yq (YAML processor)
 RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} \
@@ -58,20 +58,7 @@ RUN curl -fsSL https://get.pulumi.com | sh \
 RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} \
     && chmod +x /usr/local/bin/argocd
 
-# Tool diagnostics
-RUN echo "[INFO] Dumping tool versions for verification:" && \
-    node -v && npm -v && \
-    python3 --version && pip3 --version && \
-    java -version && \
-    mvn -v && gradle -v && \
-    yq --version || echo "yq missing" && \
-    oc version --client || echo "oc missing" && \
-    kubectl version --client || echo "kubectl missing" && \
-    tkn version || echo "tkn missing" && \
-    argocd version || echo "argocd missing" && \
-    pulumi version || echo "pulumi missing"
-
-# VS Code Extensions
+# Install VS Code extensions
 RUN HOME=/home/coder code-server \
     --user-data-dir /home/coder/.local/share/code-server \
     --install-extension ms-python.python \
@@ -83,25 +70,26 @@ RUN HOME=/home/coder code-server \
     --install-extension esbenp.prettier-vscode \
     --install-extension redhat.vscode-xml
 
-# Create workspace
+# Create expected directory structure
 RUN mkdir -p /home/coder/workspace/projects \
-    /home/coder/workspace/labs/day1-pulumi \
-    /home/coder/workspace/labs/day2-tekton \
-    /home/coder/workspace/labs/day3-gitops \
-    /home/coder/workspace/examples \
-    /home/coder/workspace/templates \
-    /home/coder/.local/bin
+             /home/coder/workspace/labs/day1-pulumi \
+             /home/coder/workspace/labs/day2-tekton \
+             /home/coder/workspace/labs/day3-gitops \
+             /home/coder/workspace/examples \
+             /home/coder/workspace/templates \
+             /home/coder/.local/bin
 
-# Configs and templates
-COPY --chown=1001:1001 gitconfig-template /home/coder/.gitconfig-template
-COPY --chown=1001:1001 startup.sh /home/coder/startup.sh
-COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/
+# Copy templates and config - ensure ownership
+COPY gitconfig-template /home/coder/.gitconfig-template
+COPY startup.sh /home/coder/startup.sh
+COPY workshop-templates/ /home/coder/workspace/templates/
 
-# Final fix: ensure scripts are executable and ownership is clean for key dirs
+# Set permissions correctly (non-root safe)
 RUN chmod +x /home/coder/startup.sh && \
-    chown -R 1001:1001 /home/coder/workspace /home/coder/.local/bin /home/coder/.gitconfig-template /home/coder/startup.sh && \
-    chmod -R 755 /home/coder/workspace /home/coder/startup.sh
+    chown -R 1001:0 /home/coder && \
+    chmod -R 755 /home/coder
 
+# Final user switch
 USER 1001
 WORKDIR /home/coder/workspace
 
