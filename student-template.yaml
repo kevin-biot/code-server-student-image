@@ -40,6 +40,23 @@ objects:
         storage: ${STORAGE_SIZE}
     storageClassName: ${STORAGE_CLASS}
 
+# PVC used by Tekton pipelines
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: shared-pvc
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: tekton
+      student: ${STUDENT_NAME}
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE_SIZE}
+    storageClassName: ${STORAGE_CLASS}
+
 # Enhanced ResourceQuota for DevOps workloads
 - apiVersion: v1
   kind: ResourceQuota

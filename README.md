@@ -79,7 +79,7 @@ Each student gets their own namespace with:
 - **Deployment**: Single replica code-server pod
 - **Service**: Internal cluster access
 - **Route**: External HTTPS access
-- **PVC**: Persistent storage for workspace
+- **PVCs**: `code-server-pvc` for the workspace and `shared-pvc` for Tekton pipelines
 - **ResourceQuota**: CPU/memory limits
 - **NetworkPolicy**: Isolation from other students
 - **RBAC**: Limited permissions within their namespace
