@@ -6,7 +6,3 @@ metadata:
 spec:
   build:
     name: code-server-student-image
-  paramValues:
-    - name: build-args
-      values:
-        - value: ARCH=ARCH_PLACEHOLDER

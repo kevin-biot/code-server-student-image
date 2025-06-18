@@ -1,7 +1,16 @@
+# Multi-architecture Dockerfile - supports both ARM64 and AMD64
 FROM ghcr.io/coder/code-server:latest
 
-ARG ARCH=arm64
-ENV TOOL_ARCH=${ARCH}
+# Auto-detect architecture
+RUN ARCH=$(uname -m) && \
+    case "${ARCH}" in \
+        x86_64) ARCH=amd64 ;; \
+        aarch64) ARCH=arm64 ;; \
+    esac && \
+    echo "Detected architecture: ${ARCH}" && \
+    echo "ARCH=${ARCH}" > /tmp/arch.env
+
+ENV TOOL_ARCH=auto
 ARG TKN_VERSION=0.41.0
 ENV HOME=/home/coder
 ENV XDG_CONFIG_HOME=/home/coder/.config
@@ -21,17 +30,20 @@ RUN apt-get update && apt-get install -y \
     nodejs npm \
     openjdk-17-jdk maven gradle \
     netcat-openbsd dnsutils \
-    jq bash-completion && \
+    jq bash-completion \
+    libgpgme11 libgpgme-dev gpgme && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# yq (YAML processor)
-RUN wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} \
-    && chmod +x /usr/local/bin/yq
+# yq (YAML processor) - auto-detect architecture
+RUN . /tmp/arch.env && \
+    wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} && \
+    chmod +x /usr/local/bin/yq
 
-# oc and kubectl
-RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux-${ARCH}.tar.gz \
-    && tar -xzvf openshift-client-linux-${ARCH}.tar.gz -C /usr/local/bin oc kubectl \
-    && rm openshift-client-linux-${ARCH}.tar.gz
+# oc and kubectl - auto-detect architecture
+RUN . /tmp/arch.env && \
+    curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux-${ARCH}.tar.gz && \
+    tar -xzvf openshift-client-linux-${ARCH}.tar.gz -C /usr/local/bin oc kubectl && \
+    rm openshift-client-linux-${ARCH}.tar.gz
 
 # Tekton CLI
 RUN ARCH=$(uname -m) && \
@@ -54,9 +66,10 @@ RUN curl -fsSL https://get.pulumi.com | sh \
     && cp $HOME/.pulumi/bin/pulumi /usr/local/bin/ \
     && chmod +x /usr/local/bin/pulumi
 
-# ArgoCD CLI
-RUN curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} \
-    && chmod +x /usr/local/bin/argocd
+# ArgoCD CLI - auto-detect architecture
+RUN . /tmp/arch.env && \
+    curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} && \
+    chmod +x /usr/local/bin/argocd
 
 # Install VS Code extensions
 RUN HOME=/home/coder code-server \
@@ -82,11 +95,13 @@ RUN mkdir -p /home/coder/workspace/projects \
 # Copy templates and config - ensure ownership
 COPY gitconfig-template /home/coder/.gitconfig-template
 COPY startup.sh /home/coder/startup.sh
+COPY fix-gpgme-issue.sh /home/coder/fix-gpgme-issue.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
 # Set permissions correctly (non-root safe)
 RUN chmod +x /home/coder/startup.sh && \
+    chmod +x /home/coder/fix-gpgme-issue.sh && \
     chown -R 1001:0 /home/coder && \
     chmod -R 755 /home/coder
 

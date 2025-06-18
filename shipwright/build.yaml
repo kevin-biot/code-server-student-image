@@ -16,4 +16,4 @@ spec:
     image: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
   paramValues:
     - name: storage-driver
-      value: vfs
+      value: overlay
