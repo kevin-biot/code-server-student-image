@@ -83,8 +83,6 @@ RUN HOME=/home/coder code-server \
     --install-extension esbenp.prettier-vscode \
     --install-extension redhat.vscode-xml
 
-USER 1001
-
 # Create workspace
 RUN mkdir -p /home/coder/workspace/projects \
     /home/coder/workspace/labs/day1-pulumi \
@@ -92,7 +90,10 @@ RUN mkdir -p /home/coder/workspace/projects \
     /home/coder/workspace/labs/day3-gitops \
     /home/coder/workspace/examples \
     /home/coder/workspace/templates \
-    /home/coder/.local/bin
+    /home/coder/.local/bin \
+    && chown -R 1001:0 /home/coder
+
+USER 1001
 
 # Bash enhancements
 RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc && \
