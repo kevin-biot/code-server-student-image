@@ -107,7 +107,7 @@ RUN echo 'source <(oc completion bash)' >> /home/coder/.bashrc && \
 # Configs and templates
 COPY --chown=1001:1001 gitconfig-template /home/coder/.gitconfig-template
 COPY --chown=1001:1001 startup.sh /home/coder/startup.sh
-COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/ || true
+COPY --chown=1001:1001 workshop-templates/ /home/coder/workspace/templates/
 
 RUN chmod +x /home/coder/startup.sh && \
     chown -R 1001:1001 /home/coder && \
