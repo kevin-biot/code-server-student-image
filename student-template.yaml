@@ -238,7 +238,7 @@ objects:
               cpu: ${CPU_REQUEST}
           volumeMounts:
           - name: data
-            mountPath: /home/coder
+            mountPath: /home/coder/workspace
           livenessProbe:
             httpGet:
               path: /healthz
