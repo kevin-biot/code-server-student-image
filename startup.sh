@@ -16,11 +16,24 @@ if [[ ! -f /home/coder/.gitconfig && -f /home/coder/.gitconfig-template ]]; then
     sed -i "s/STUDENT_ID/$STUDENT_NAMESPACE/g" /home/coder/.gitconfig
 fi
 
-# Create comprehensive welcome message
+# Create comprehensive welcome message with quick start guide reference
 cat > /home/coder/workspace/README.md << 'EOF'
 # 🚀 DevOps Workshop Environment
 
 Welcome to your complete cloud-native development environment! This workspace contains everything you need for the 3-day DevOps workshop.
+
+## 👋 **FIRST TIME HERE? START WITH THIS!**
+
+📖 **[READ THE STUDENT QUICK START GUIDE](./STUDENT-QUICK-START.md)** 📖
+
+If you've never used a code-server/VS Code environment before, please **click on `STUDENT-QUICK-START.md`** in the file explorer on the left. This guide will teach you:
+- How to use this web-based development environment
+- How to open and use the terminal
+- Essential keyboard shortcuts
+- Your first DevOps commands
+- Troubleshooting common issues
+
+> 🎯 **This is a laptop-free workshop!** Everything runs in your browser - no downloads or installs needed.
 
 ## 📚 Workshop Structure
 
@@ -353,6 +366,11 @@ Implement GitOps workflows using ArgoCD for automated application deployment and
 ✅ Rollback functionality tested
 ✅ Multi-environment promotion workflow
 EOF
+fi
+
+# Copy student quick start guide to workspace
+if [ -f /home/coder/STUDENT-QUICK-START.md ]; then
+    cp /home/coder/STUDENT-QUICK-START.md /home/coder/workspace/STUDENT-QUICK-START.md
 fi
 
 # Set up examples directory with useful references

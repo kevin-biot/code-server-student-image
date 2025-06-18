@@ -82,6 +82,7 @@ RUN mkdir -p /home/coder/workspace/projects \
 # Copy templates and config - ensure ownership
 COPY gitconfig-template /home/coder/.gitconfig-template
 COPY startup.sh /home/coder/startup.sh
+COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
 # Set permissions correctly (non-root safe)

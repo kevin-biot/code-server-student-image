@@ -5,6 +5,8 @@ A self-contained OpenShift deployment for providing individual code-server envir
 ## Features
 
 - **Complete Development Environment**: Pre-installed with Python, Node.js, Java, Docker, kubectl, oc CLI, and Helm
+- **Laptop-Free Workshop**: No student setup required - everything runs in the browser
+- **Student Quick Start Guide**: Comprehensive guide for students new to code-server/VS Code
 - **Multi-Student Support**: Template-based deployment for easy scaling
 - **Security**: Network policies, resource quotas, and RBAC for student isolation
 - **Persistent Storage**: Each student gets their own workspace that persists
@@ -54,6 +56,9 @@ After deployment, each student will have:
 - A unique URL: `https://studentXX-code-server.apps.your-cluster.com`
 - A generated password (saved in `student-credentials.txt`)
 - Their own isolated namespace with resource limits
+- **STUDENT-QUICK-START.md** guide for first-time users
+
+**For students new to code-server/VS Code**: Direct them to click on `STUDENT-QUICK-START.md` in their workspace file explorer for a complete tutorial on using the environment.
 
 ## Architecture
 
