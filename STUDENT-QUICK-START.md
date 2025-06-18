@@ -262,6 +262,12 @@ helm version
 
 ## 🎯 **Step 8: Workshop-Specific Getting Started**
 
+First, clone the workshop repositories (skip if they are already present):
+```bash
+cd ~/workspace
+./clone-workshop-repos.sh
+```
+
 ### Day 1: Pulumi Infrastructure Setup
 ```bash
 # Navigate to Day 1 exercises
