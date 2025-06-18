@@ -84,6 +84,8 @@ Each student gets their own namespace with:
 ### Customization
 - Modify `student-template.yaml` to adjust resources or add components
 - Update `Dockerfile` to include additional tools or languages
+- The `Dockerfile` creates `/home/coder/workspace/...` directories as `root`
+  before switching to user `1001`.
 - Edit `startup.sh` to customize the welcome experience
 
 ## Files
