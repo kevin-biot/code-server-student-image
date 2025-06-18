@@ -22,6 +22,9 @@ The project uses Shipwright for automated builds:
 The script detects whether you are on an `x86_64` or `arm64` system and passes
 the correct architecture to Shipwright so multi-arch builds work out of the box.
 
+You can override the default build timeout by setting the `BUILD_TIMEOUT`
+environment variable before running the script.
+
 ### 2. Deploy Students
 
 Use the management script to deploy multiple student environments:
