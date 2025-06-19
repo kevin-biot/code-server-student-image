@@ -30,8 +30,7 @@ RUN apt-get update && apt-get install -y \
     nodejs npm \
     openjdk-17-jdk maven gradle \
     netcat-openbsd dnsutils \
-    jq bash-completion \
-    libgpgme11 libgpgme-dev && \
+    jq bash-completion && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # yq (YAML processor) - auto-detect architecture
