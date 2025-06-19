@@ -326,8 +326,8 @@ parameters:
   description: PVC storage size
   value: 1Gi
 - name: STORAGE_CLASS
-  description: Storage class for PVC
-  value: gp3-csi
+  description: Storage class for PVC (auto-detected if not specified)
+  value: ""
 - name: MEMORY_LIMIT
   description: Memory limit per student
   value: 2Gi

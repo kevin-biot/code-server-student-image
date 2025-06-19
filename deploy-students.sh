@@ -15,6 +15,7 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_FILE="${SCRIPT_DIR}/student-template.yaml"
 CLUSTER_DOMAIN=${CLUSTER_DOMAIN:-"apps.cluster.local"}
+STORAGE_CLASS=${STORAGE_CLASS:-""}
 
 # Colors for output
 RED='\033[0;31m'
@@ -64,11 +65,36 @@ deploy_student() {
     
     log "Deploying environment for ${student_name}..."
     
+    # Auto-detect storage class if not specified
+    local storage_class="${STORAGE_CLASS}"
+    if [[ -z "$storage_class" ]]; then
+        # Check for CRC environment
+        if oc get storageclass crc-csi-hostpath-provisioner >/dev/null 2>&1; then
+            storage_class="crc-csi-hostpath-provisioner"
+            log "📁 Detected CRC environment, using storage class: ${storage_class}"
+        # Check for AWS/EKS gp3
+        elif oc get storageclass gp3-csi >/dev/null 2>&1; then
+            storage_class="gp3-csi"
+            log "☁️ Detected AWS environment, using storage class: ${storage_class}"
+        # Check for default storage class
+        else
+            storage_class=$(oc get storageclass -o jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}' | head -1)
+            if [[ -n "$storage_class" ]]; then
+                log "🔧 Using default storage class: ${storage_class}"
+            else
+                # Fallback to first available storage class
+                storage_class=$(oc get storageclass -o jsonpath='{.items[0].metadata.name}')
+                log "⚠️ No default storage class found, using: ${storage_class}"
+            fi
+        fi
+    fi
+    
     # Process template and apply
     if ! oc process -f "${TEMPLATE_FILE}" \
         -p STUDENT_NAME="${student_name}" \
         -p STUDENT_PASSWORD="${password}" \
         -p CLUSTER_DOMAIN="${CLUSTER_DOMAIN}" \
+        -p STORAGE_CLASS="${storage_class}" \
         -p IMAGE_NAME="${IMAGE_NAME:-image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest}" \
         | oc apply -f -; then
         error "Failed to apply template for ${student_name}"

@@ -3,7 +3,7 @@
 
 set -e
 
-STUDENT_NAME=${1:-"student01"}
+STUDENT_NAME=${1:-"student04"}
 
 echo "🔍 Testing deployment for ${STUDENT_NAME}..."
 
