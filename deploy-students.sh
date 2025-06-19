@@ -65,24 +65,75 @@ deploy_student() {
     log "Deploying environment for ${student_name}..."
     
     # Process template and apply
-    oc process -f "${TEMPLATE_FILE}" \
+    if ! oc process -f "${TEMPLATE_FILE}" \
         -p STUDENT_NAME="${student_name}" \
         -p STUDENT_PASSWORD="${password}" \
         -p CLUSTER_DOMAIN="${CLUSTER_DOMAIN}" \
         -p IMAGE_NAME="${IMAGE_NAME:-image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest}" \
-        | oc apply -f -
+        | oc apply -f -; then
+        error "Failed to apply template for ${student_name}"
+        return 1
+    fi
     
-    # Wait for deployment to be ready
+    # Wait for deployment to be ready with better feedback
     log "Waiting for ${student_name} deployment to be ready..."
-    oc rollout status deployment/code-server -n "${student_name}" --timeout=300s
+    
+    # Check deployment status with timeout
+    local timeout=300
+    local elapsed=0
+    local interval=10
+    
+    while [[ $elapsed -lt $timeout ]]; do
+        local ready_replicas=$(oc get deployment code-server -n "${student_name}" -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+        local desired_replicas=$(oc get deployment code-server -n "${student_name}" -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "1")
+        
+        if [[ "${ready_replicas}" == "${desired_replicas}" ]]; then
+            log "✅ ${student_name} deployment is ready!"
+            break
+        fi
+        
+        # Show current status
+        local pod_status=$(oc get pods -n "${student_name}" -l app=code-server --no-headers 2>/dev/null | awk '{print $3}' | head -1)
+        log "⏳ ${student_name}: Pod status: ${pod_status:-"Unknown"} (${elapsed}s/${timeout}s)"
+        
+        # Check for common issues
+        if [[ $elapsed -gt 60 ]]; then
+            local events=$(oc get events -n "${student_name}" --sort-by='.lastTimestamp' --no-headers | tail -3 | awk '{print $6,$7,$8,$9,$10}')
+            if [[ -n "$events" ]]; then
+                warn "Recent events: $events"
+            fi
+        fi
+        
+        sleep $interval
+        elapsed=$((elapsed + interval))
+    done
+    
+    if [[ $elapsed -ge $timeout ]]; then
+        error "Timeout waiting for ${student_name} deployment. Check 'oc get pods -n ${student_name}' for details."
+        return 1
+    fi
+    
+    # Verify service endpoints
+    local endpoints=$(oc get endpoints code-server -n "${student_name}" -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    if [[ -z "$endpoints" ]]; then
+        warn "No service endpoints found for ${student_name}. Service may not be working correctly."
+    fi
     
     # Get route URL
-    local route_url=$(oc get route code-server -n "${student_name}" -o jsonpath='{.spec.host}')
+    local route_url=$(oc get route code-server -n "${student_name}" -o jsonpath='{.spec.host}' 2>/dev/null)
     
+    if [[ -z "$route_url" ]]; then
+        error "Failed to get route URL for ${student_name}"
+        return 1
+    fi
+    
+    log "✅ ${student_name} deployed successfully!"
     echo "Student: ${student_name}"
     echo "  URL: https://${route_url}"
     echo "  Password: ${password}"
     echo ""
+    
+    return 0
 }
 
 generate_password() {

@@ -231,12 +231,22 @@ objects:
         securityContext:
           runAsUser: 1001
           runAsGroup: 1001
+          runAsNonRoot: true
           fsGroup: 1001
         containers:
         - name: code-server
           image: ${IMAGE_NAME}
           ports:
           - containerPort: 8080
+            protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - "ALL"
+            seccompProfile:
+              type: RuntimeDefault
           env:
           - name: PASSWORD
             value: ${STUDENT_PASSWORD}

@@ -28,5 +28,6 @@ docker-compose.override.yml
 # student-credentials.txt
 
 # Ignore any local test files
-test-*
+test-*.txt
+test-*.log
 local-*
