@@ -65,6 +65,11 @@ deploy_student() {
     
     log "Deploying environment for ${student_name}..."
     
+    # Ensure student namespace can pull from devops registry
+    if ! oc policy add-role-to-user system:image-puller "system:serviceaccount:${student_name}:default" -n devops >/dev/null 2>&1; then
+        warn "Could not grant image pull permissions to ${student_name}"
+    fi
+    
     # Auto-detect storage class if not specified
     local storage_class="${STORAGE_CLASS}"
     if [[ -z "$storage_class" ]]; then
