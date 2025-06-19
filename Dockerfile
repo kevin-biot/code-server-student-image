@@ -98,14 +98,14 @@ COPY fix-gpgme-issue.sh /home/coder/fix-gpgme-issue.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
-# Set permissions correctly (non-root safe)
+# Set permissions correctly (OpenShift-compatible)
 RUN chmod +x /home/coder/startup.sh && \
     chmod +x /home/coder/fix-gpgme-issue.sh && \
-    chown -R 1001:0 /home/coder && \
-    chmod -R 755 /home/coder
+    chgrp -R 0 /home/coder && \
+    chmod -R g=u /home/coder
 
-# Final user switch
-USER 1001
+# OpenShift-compatible user (will be overridden by SCC)
+# USER 1001
 WORKDIR /home/coder/workspace
 
 ENTRYPOINT ["/bin/bash", "-c", "/home/coder/startup.sh || exec bash"]

@@ -229,10 +229,7 @@ objects:
           workshop.devops/tools: "pulumi,tekton,argocd,java,nodejs,python"
       spec:
         securityContext:
-          runAsUser: 1001
-          runAsGroup: 1001
           runAsNonRoot: true
-          fsGroup: 1001
         containers:
         - name: code-server
           image: ${IMAGE_NAME}
