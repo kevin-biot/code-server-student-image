@@ -387,6 +387,20 @@ echo "export STUDENT_NAMESPACE=$STUDENT_NAMESPACE" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_UPDATE_CHECK=true" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_CONFIRMATIONS=true" >> /home/coder/.bashrc
 
+# Create oc config to set default project context
+mkdir -p /home/coder/.kube
+cat > /home/coder/.kube/config << EOF
+apiVersion: v1
+kind: Config
+current-context: default
+contexts:
+- context:
+    cluster: ""
+    namespace: $STUDENT_NAMESPACE
+    user: ""
+  name: default
+EOF
+
 # Start code-server with proper configuration
 exec /usr/bin/entrypoint.sh \
     --bind-addr 0.0.0.0:8080 \

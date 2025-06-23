@@ -95,12 +95,16 @@ RUN mkdir -p /home/coder/workspace/projects \
 COPY gitconfig-template /home/coder/.gitconfig-template
 COPY startup.sh /home/coder/startup.sh
 COPY fix-gpgme-issue.sh /home/coder/fix-gpgme-issue.sh
+COPY run-pipeline.sh /home/coder/run-pipeline.sh
+COPY start-pipeline.sh /home/coder/start-pipeline.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
 # Set permissions correctly (OpenShift-compatible)
 RUN chmod +x /home/coder/startup.sh && \
     chmod +x /home/coder/fix-gpgme-issue.sh && \
+    chmod +x /home/coder/run-pipeline.sh && \
+    chmod +x /home/coder/start-pipeline.sh && \
     chgrp -R 0 /home/coder && \
     chmod -R g=u /home/coder
 

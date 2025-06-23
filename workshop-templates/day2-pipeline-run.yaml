@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: java-webapp-run-
+  namespace: ${STUDENT_NAMESPACE}
+spec:
+  pipelineRef:
+    name: java-webapp-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/kevin-biot/devops-workshop.git
+    - name: git-revision
+      value: main
+    - name: build-name
+      value: java-webapp-build
+    - name: namespace
+      value: ${STUDENT_NAMESPACE}
+  workspaces:
+    - name: source
+      persistentVolumeClaim:
+        claimName: shared-pvc

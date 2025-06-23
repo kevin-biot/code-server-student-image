@@ -46,6 +46,8 @@ Options:
     -n, --number NUM        Create numbered students from student01 to studentNN
     -d, --domain DOMAIN     OpenShift cluster domain (default: apps.cluster.local)
     -i, --image IMAGE       Code-server image to use
+        --console-access        Create OpenShift console users for students
+        --console-password PWD  Password for OpenShift console (default: workshop123)
     --cleanup               Clean up (delete) student environments
     -f, --force             Redeploy even if namespace already exists
     -h, --help              Show this help message
@@ -59,11 +61,36 @@ Examples:
 EOF
 }
 
+create_console_user() {
+    local student_name=$1
+    local console_password=$2
+    
+    log "🔐 Creating OpenShift console user: ${student_name}"
+    
+    # Create user and identity (ignore errors if already exists)
+    oc create user "${student_name}" 2>/dev/null || true
+    oc create identity "htpasswd_provider:${student_name}" 2>/dev/null || true
+    oc create useridentitymapping "htpasswd_provider:${student_name}" "${student_name}" 2>/dev/null || true
+    
+    # Grant admin access to their namespace
+    oc adm policy add-role-to-user admin "${student_name}" -n "${student_name}" 2>/dev/null || true
+    
+    # Grant view access to tekton-pipelines namespace for dashboard
+    oc adm policy add-role-to-user view "${student_name}" -n openshift-pipelines 2>/dev/null || true
+    
+    log "✅ Console user created - Username: ${student_name}, Password: ${console_password}"
+}
+
 deploy_student() {
     local student_name=$1
     local password=$2
     
     log "Deploying environment for ${student_name}..."
+    
+    # Create OpenShift console user if requested
+    if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
+        create_console_user "${student_name}" "${CONSOLE_PASSWORD}"
+    fi
     
     # Ensure student namespace can pull from devops registry
     if ! oc policy add-role-to-user system:image-puller "system:serviceaccount:${student_name}:default" -n devops >/dev/null 2>&1; then
@@ -183,6 +210,8 @@ NUMBER=""
 IMAGE_NAME=""
 CLEANUP=false
 FORCE=false
+CREATE_CONSOLE_USERS=false
+CONSOLE_PASSWORD="workshop123"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -200,6 +229,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -i|--image)
             IMAGE_NAME="$2"
+            shift 2
+            ;;
+        --console-access)
+            CREATE_CONSOLE_USERS=true
+            shift
+            ;;
+        --console-password)
+            CONSOLE_PASSWORD="$2"
             shift 2
             ;;
         --cleanup)
@@ -252,7 +289,16 @@ fi
 CREDS_FILE="${SCRIPT_DIR}/student-credentials.txt"
 if [[ "${CLEANUP}" != "true" ]]; then
     echo "# Student Credentials - $(date)" > "${CREDS_FILE}"
-    echo "# Format: Student | URL | Password" >> "${CREDS_FILE}"
+    echo "# Generated for ${#student_list[@]} students" >> "${CREDS_FILE}"
+    echo "#" >> "${CREDS_FILE}"
+    if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
+        echo "# Format: Student | Code-Server URL | Code-Server Password | OpenShift Console | Console Password" >> "${CREDS_FILE}"
+        echo "# OpenShift Console: https://console-openshift-console.${CLUSTER_DOMAIN}" >> "${CREDS_FILE}"
+        echo "# Tekton Dashboard: https://tekton-dashboard.${CLUSTER_DOMAIN}" >> "${CREDS_FILE}"
+    else
+        echo "# Format: Student | Code-Server URL | Code-Server Password" >> "${CREDS_FILE}"
+        echo "# Note: No OpenShift console access created (use --console-access flag)" >> "${CREDS_FILE}"
+    fi
     echo "" >> "${CREDS_FILE}"
 fi
 
@@ -278,7 +324,11 @@ for student in "${student_list[@]}"; do
         
         # Save credentials
         route_url=$(oc get route code-server -n "${student}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "pending")
-        echo "${student} | https://${route_url} | ${password}" >> "${CREDS_FILE}"
+        if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
+            echo "${student} | https://${route_url} | ${password} | https://console-openshift-console.${CLUSTER_DOMAIN} | ${CONSOLE_PASSWORD}" >> "${CREDS_FILE}"
+        else
+            echo "${student} | https://${route_url} | ${password}" >> "${CREDS_FILE}"
+        fi
     fi
 done
 
