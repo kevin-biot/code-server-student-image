@@ -61,16 +61,61 @@ Examples:
 EOF
 }
 
+# NEW: Auto-detect OAuth provider name
+get_oauth_provider_name() {
+    local provider_name=$(oc get oauth cluster -o jsonpath='{.spec.identityProviders[0].name}' 2>/dev/null)
+    if [[ -z "$provider_name" ]]; then
+        # Default fallback
+        provider_name="htpasswd_provider"
+        warn "Could not detect OAuth provider name, using default: ${provider_name}"
+    else
+        log "🔍 Detected OAuth provider name: ${provider_name}"
+    fi
+    echo "$provider_name"
+}
+
+# NEW: Update htpasswd secret with student password
+update_htpasswd_secret() {
+    local student_name=$1
+    local password=$2
+    
+    log "🔐 Adding ${student_name} to htpasswd secret..."
+    
+    # Get current htpasswd content (may be empty)
+    local temp_file="/tmp/htpasswd-update-$"
+    oc get secret htpass-secret -n openshift-config -o jsonpath='{.data.htpasswd}' 2>/dev/null | base64 -d > "$temp_file" || touch "$temp_file"
+    
+    # Add or update the student
+    htpasswd -bB "$temp_file" "$student_name" "$password"
+    
+    # Update the secret
+    oc create secret generic htpass-secret \
+        --from-file=htpasswd="$temp_file" \
+        -n openshift-config \
+        --dry-run=client -o yaml | oc replace -f -
+    
+    # Clean up
+    rm -f "$temp_file"
+    
+    log "✅ Updated htpasswd secret with ${student_name}"
+}
+
 create_console_user() {
     local student_name=$1
     local console_password=$2
     
     log "🔐 Creating OpenShift console user: ${student_name}"
     
+    # Get the current OAuth provider name
+    local oauth_provider=$(get_oauth_provider_name)
+    
     # Create user and identity (ignore errors if already exists)
     oc create user "${student_name}" 2>/dev/null || true
-    oc create identity "htpasswd_provider:${student_name}" 2>/dev/null || true
-    oc create useridentitymapping "htpasswd_provider:${student_name}" "${student_name}" 2>/dev/null || true
+    oc create identity "${oauth_provider}:${student_name}" 2>/dev/null || true
+    oc create useridentitymapping "${oauth_provider}:${student_name}" "${student_name}" 2>/dev/null || true
+    
+    # Update htpasswd secret with password
+    update_htpasswd_secret "${student_name}" "${console_password}"
     
     # Grant admin access to their namespace
     oc adm policy add-role-to-user admin "${student_name}" -n "${student_name}" 2>/dev/null || true
@@ -186,9 +231,15 @@ deploy_student() {
     fi
     
     log "✅ ${student_name} deployed successfully!"
-    echo "Student: ${student_name}"
-    echo "  URL: https://${route_url}"
-    echo "  Password: ${password}"
+    echo ""
+    echo "📋 ${student_name} Access Information:"
+    echo "   🌐 Code-Server: https://${route_url}"
+    echo "   🔑 Code-Server Password: ${password}"
+    if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
+        echo "   🖥️  Console Login: oc login https://api.crc.testing:6443 -u ${student_name} -p ${CONSOLE_PASSWORD} --insecure-skip-tls-verify"
+        echo "   🌍 OpenShift Console: https://console-openshift-console.${CLUSTER_DOMAIN}"
+        echo "   🔐 Console Credentials: ${student_name} / ${CONSOLE_PASSWORD}"
+    fi
     echo ""
     
     return 0
@@ -292,7 +343,7 @@ if [[ "${CLEANUP}" != "true" ]]; then
     echo "# Generated for ${#student_list[@]} students" >> "${CREDS_FILE}"
     echo "#" >> "${CREDS_FILE}"
     if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
-        echo "# Format: Student | Code-Server URL | Code-Server Password | OpenShift Console | Console Password" >> "${CREDS_FILE}"
+        echo "# Format: Student | Code-Server URL | Code-Server Password | OpenShift Console | Console Password | CLI Login Command" >> "${CREDS_FILE}"
         echo "# OpenShift Console: https://console-openshift-console.${CLUSTER_DOMAIN}" >> "${CREDS_FILE}"
         echo "# Tekton Dashboard: https://tekton-dashboard.${CLUSTER_DOMAIN}" >> "${CREDS_FILE}"
     else
@@ -325,7 +376,7 @@ for student in "${student_list[@]}"; do
         # Save credentials
         route_url=$(oc get route code-server -n "${student}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "pending")
         if [[ "${CREATE_CONSOLE_USERS}" == "true" ]]; then
-            echo "${student} | https://${route_url} | ${password} | https://console-openshift-console.${CLUSTER_DOMAIN} | ${CONSOLE_PASSWORD}" >> "${CREDS_FILE}"
+            echo "${student} | https://${route_url} | ${password} | https://console-openshift-console.${CLUSTER_DOMAIN} | ${CONSOLE_PASSWORD} | oc login https://api.crc.testing:6443 -u ${student} -p ${CONSOLE_PASSWORD} --insecure-skip-tls-verify" >> "${CREDS_FILE}"
         else
             echo "${student} | https://${route_url} | ${password}" >> "${CREDS_FILE}"
         fi

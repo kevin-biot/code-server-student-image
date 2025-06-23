@@ -144,53 +144,10 @@ objects:
     # Allow all egress (needed for git, registry, etc.)
     - {}
 
-# Enhanced RBAC for DevOps operations
-- apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    namespace: ${STUDENT_NAME}
-    name: devops-student-role
-  rules:
-  # Core Kubernetes resources
-  - apiGroups: [""]
-    resources: ["pods", "services", "configmaps", "secrets", "persistentvolumeclaims"]
-    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
-  - apiGroups: [""]
-    resources: ["pods/log", "pods/status"]
-    verbs: ["get", "list", "watch"]
-  
-  # Apps resources
-  - apiGroups: ["apps"]
-    resources: ["deployments", "replicasets", "statefulsets"]
-    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
-  
-  # OpenShift specific resources
-  - apiGroups: ["route.openshift.io"]
-    resources: ["routes"]
-    verbs: ["get", "list", "create", "update", "patch", "delete"]
-  - apiGroups: ["image.openshift.io"]
-    resources: ["imagestreams", "imagestreamtags"]
-    verbs: ["get", "list", "create", "update", "patch", "delete"]
-  
-  # Networking
-  - apiGroups: ["networking.k8s.io"]
-    resources: ["networkpolicies"]
-    verbs: ["get", "list", "create", "update", "patch", "delete"]
-  
-  # Tekton resources
-  - apiGroups: ["tekton.dev"]
-    resources: ["tasks", "pipelines", "pipelineruns", "taskruns"]
-    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
-  
-  # Shipwright resources  
-  - apiGroups: ["shipwright.io"]
-    resources: ["builds", "buildruns"]
-    verbs: ["get", "list", "create", "update", "patch", "delete", "watch"]
-  - apiGroups: ["shipwright.io"]
-    resources: ["clusterbuildstrategies"]
-    verbs: ["get", "list", "watch"]
+# Enhanced RBAC for DevOps operations - Grant admin access to namespace
+# Note: Students need admin access to create roles/rolebindings for pipeline setup
 
-# Enhanced RoleBinding
+# Enhanced RoleBinding - Grant admin access for pipeline setup
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   metadata:
@@ -204,8 +161,8 @@ objects:
     name: pipeline
     namespace: ${STUDENT_NAME}
   roleRef:
-    kind: Role
-    name: devops-student-role
+    kind: ClusterRole
+    name: admin
     apiGroup: rbac.authorization.k8s.io
 
 # Pipeline ServiceAccount for Tekton
