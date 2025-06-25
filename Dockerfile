@@ -19,19 +19,28 @@ ENV SHELL=/bin/bash
 ENV STUDENT_NAMESPACE=""
 ENV PULUMI_SKIP_UPDATE_CHECK=true
 ENV PULUMI_SKIP_CONFIRMATIONS=true
+ENV PULUMI_CONFIG_PASSPHRASE="workshop123"
 
 USER root
 
-# Core dev tools
+# Remove existing Node.js and install Node.js 20
+RUN apt-get update && \
+    apt-get remove -y nodejs npm && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
+# Core dev tools (updated without nodejs npm since we installed them above)
 RUN apt-get update && apt-get install -y \
     git vim nano unzip curl wget tree htop procps \
     build-essential \
     python3 python3-pip python3-venv \
-    nodejs npm \
     openjdk-17-jdk maven gradle \
     netcat-openbsd dnsutils \
     jq bash-completion && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Verify Node.js 20 installation
+RUN node --version && npm --version
 
 # yq (YAML processor) - auto-detect architecture
 RUN . /tmp/arch.env && \

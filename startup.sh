@@ -10,13 +10,18 @@ if [ -z "$STUDENT_NAMESPACE" ]; then
 fi
 export STUDENT_NAMESPACE
 
+# Set up Pulumi environment to avoid passphrase prompts
+export PULUMI_CONFIG_PASSPHRASE="workshop123"
+export PULUMI_SKIP_UPDATE_CHECK=true
+export PULUMI_SKIP_CONFIRMATIONS=true
+
 # Set up Git configuration if not already done
 if [[ ! -f /home/coder/.gitconfig && -f /home/coder/.gitconfig-template ]]; then
     cp /home/coder/.gitconfig-template /home/coder/.gitconfig
     sed -i "s/STUDENT_ID/$STUDENT_NAMESPACE/g" /home/coder/.gitconfig
 fi
 
-# Create comprehensive welcome message with quick start guide reference
+# Create comprehensive welcome message with updated Tekton/Shipwright approach
 cat > /home/coder/workspace/README.md << 'EOF'
 # 🚀 DevOps Workshop Environment
 
@@ -37,15 +42,16 @@ If you've never used a code-server/VS Code environment before, please **click on
 
 ## 📚 Workshop Structure
 
-### 🏗️ Day 1: Infrastructure as Code with Pulumi
+### 🏗️ Day 1: Infrastructure as Code with Pulumi + Tekton
 - **Location**: `labs/day1-pulumi/`
-- **Focus**: Provision infrastructure using TypeScript
-- **Tools**: Pulumi, Redis, Load Testing, Web Applications
+- **Focus**: Cloud-native infrastructure with Tekton/Shipwright builds
+- **Tools**: Pulumi, Tekton, Shipwright, OpenShift Routes
+- **No Docker Required**: Uses cloud-native build pipelines
 
-### 🔄 Day 2: CI/CD Pipelines with Tekton
+### 🔄 Day 2: Advanced CI/CD Pipelines
 - **Location**: `labs/day2-tekton/`  
-- **Focus**: Build enterprise-grade CI/CD pipelines
-- **Tools**: Tekton, Shipwright, GitOps, Container Registry
+- **Focus**: Enterprise-grade CI/CD pipelines
+- **Tools**: Tekton Pipelines, Triggers, GitOps integration
 
 ### 🔄 Day 3: GitOps with ArgoCD
 - **Location**: `labs/day3-gitops/`
@@ -57,16 +63,15 @@ If you've never used a code-server/VS Code environment before, please **click on
 ### **Languages & Runtimes**
 - ☕ **Java 17** with Maven and Gradle
 - 🐍 **Python 3** with pip and virtual environments
-- 🟢 **Node.js** with npm and TypeScript support
+- 🟢 **Node.js 20** with npm and TypeScript support
 - 🔧 **Build tools** for all major languages
 
 ### **DevOps & Cloud Native**
 - 🔴 **OpenShift CLI** (`oc`) - Platform management
 - ⚙️ **Tekton CLI** (`tkn`) - Pipeline operations
 - ☸️ **Kubernetes CLI** (`kubectl`) - Container orchestration
-- 🏗️ **Pulumi CLI** - Infrastructure as Code
+- 🏗️ **Pulumi CLI** - Infrastructure as Code (passphrase pre-configured)
 - 📦 **Helm** - Package management
-- 🐳 **Docker** - Container operations
 - 🔄 **ArgoCD CLI** - GitOps workflows
 
 ### **Development Tools**
@@ -82,8 +87,8 @@ If you've never used a code-server/VS Code environment before, please **click on
 workspace/
 ├── projects/          # Your main development work
 ├── labs/
-│   ├── day1-pulumi/   # Day 1: Infrastructure as Code
-│   ├── day2-tekton/   # Day 2: CI/CD Pipelines
+│   ├── day1-pulumi/   # Day 1: Infrastructure as Code + Tekton
+│   ├── day2-tekton/   # Day 2: Advanced CI/CD Pipelines
 │   └── day3-gitops/   # Day 3: GitOps with ArgoCD
 ├── examples/          # Sample code and references
 └── templates/         # Workshop exercise templates
@@ -101,45 +106,53 @@ oc whoami
 oc project $STUDENT_NAMESPACE
 ```
 
-### **Day 1: Pulumi Infrastructure**
+### **Day 1: Pulumi + Tekton Infrastructure**
 ```bash
 cd labs/day1-pulumi
+
+# Clone workshop repository
+git clone https://github.com/kevin-biot/IaC.git .
+
+# Setup environment (no passphrase needed!)
 npm install
+pulumi login --local
 pulumi stack init dev
+pulumi config set studentNamespace $STUDENT_NAMESPACE
+
+# Deploy with cloud-native builds
+oc apply -f tekton/
 pulumi up
 ```
 
-### **Day 2: Tekton Pipelines**
+### **Day 2: Advanced Tekton Pipelines**
 ```bash
 cd labs/day2-tekton
-oc apply -f tekton/
-tkn pipeline start java-webapp-pipeline
+oc apply -f tekton/clustertasks/
+oc apply -f tekton/pipeline.yaml
+tkn pipeline start advanced-pipeline
 ```
 
 ### **Day 3: ArgoCD GitOps**
 ```bash
 cd labs/day3-gitops
 argocd login <argocd-server>
-argocd app create my-app --repo <git-repo> --path manifests --dest-server <k8s-server>
+argocd app create my-app --repo <git-repo> --path manifests
 ```
 
-### **Development Workflow**
+### **Development Workflow (Updated for Tekton)**
 ```bash
 # Create new project
 mkdir projects/my-app && cd projects/my-app
 git init
 
-# Java development
-mvn archetype:generate
-mvn clean package
-
-# Container operations
-docker build -t my-app .
-oc new-app --docker-image=my-app
-
-# Pipeline management
-tkn pipeline list
+# Tekton build workflow
+oc create -f tekton/pipeline-run.yaml
 tkn pipelinerun logs --last -f
+
+# Monitor builds and deployments
+tkn pipeline list
+oc get builds,buildruns
+oc get pods
 
 # GitOps management
 argocd app list
@@ -150,9 +163,7 @@ argocd app sync my-app
 
 When your applications are deployed, you can access:
 
-- 🌐 **Your Web Application**: `https://$STUDENT_NAMESPACE-webapp.apps.cluster.domain`
-- 📊 **Redis Commander**: `https://$STUDENT_NAMESPACE-redis.apps.cluster.domain`
-- 🎯 **Load Generator**: `https://$STUDENT_NAMESPACE-loadgen.apps.cluster.domain`
+- 🌐 **Your Web Application**: Check `oc get routes` for URL
 - 🖥️ **OpenShift Console**: `https://console-openshift-console.apps.cluster.domain`
 - 📈 **Tekton Dashboard**: `https://tekton-dashboard.apps.cluster.domain`
 - 🔄 **ArgoCD UI**: `https://argocd.apps.cluster.domain`
@@ -164,7 +175,8 @@ When your applications are deployed, you can access:
 3. **Git Integration**: Built-in Git support with visual diff
 4. **Extensions**: Pre-installed extensions for YAML, Java, TypeScript
 5. **Auto-completion**: Tab completion enabled for all CLI tools
-6. **Shortcuts**: `Ctrl+Shift+P` for command palette
+6. **No Passphrases**: Pulumi passphrase pre-configured as `workshop123`
+7. **Cloud Builds**: No Docker needed - all builds happen in Tekton/Shipwright
 
 ## 🆘 Need Help?
 
@@ -175,198 +187,72 @@ When your applications are deployed, you can access:
 
 ---
 
-**🎯 Ready to start your DevOps journey? Begin with Day 1 in the `labs/day1-pulumi` directory!**
+**🎯 Ready to start your cloud-native DevOps journey? Begin with Day 1 in the `labs/day1-pulumi` directory!**
 EOF
 
-# Set up Day 1 Pulumi exercise structure
+# Set up Day 1 Pulumi exercise structure with updated approach
 mkdir -p /home/coder/workspace/labs/day1-pulumi
 cd /home/coder/workspace/labs/day1-pulumi
 
-if [ ! -f package.json ]; then
-    # Create Pulumi project structure
-    cat > package.json << 'EOF'
-{
-  "name": "student-infrastructure",
-  "version": "1.0.0",
-  "description": "Day 1: Infrastructure as Code with Pulumi",
-  "main": "index.ts",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
-  },
-  "dependencies": {
-    "@pulumi/kubernetes": "^4.0.0",
-    "@pulumi/pulumi": "^3.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^18.0.0",
-    "typescript": "^4.9.0"
-  }
-}
-EOF
-
-    cat > Pulumi.yaml << 'EOF'
-name: student-infrastructure
-runtime: nodejs
-description: Day 1 - Provision complete microservices infrastructure
-config:
-  student-infrastructure:namespace:
-    description: Student namespace for resources
-    default: student01
-EOF
-
+if [ ! -f README.md ]; then
     cat > README.md << 'EOF'
-# Day 1: Infrastructure as Code with Pulumi
+# Day 1: Infrastructure as Code with Pulumi + Tekton
 
 ## Objective
-Use Pulumi to provision a complete microservices architecture including web application, database, background worker, and load testing tools.
+Use Pulumi with Tekton/Shipwright to provision cloud-native infrastructure including web application builds and database deployment.
+
+## New Cloud-Native Approach
+- ✅ **No Docker required** - Uses Tekton/Shipwright for builds
+- ✅ **Enterprise-ready** - Real CI/CD pipeline patterns
+- ✅ **Simplified setup** - No local Docker complexity
 
 ## Getting Started
 
-1. **Install dependencies**:
+1. **Clone workshop repository**:
+   ```bash
+   git clone https://github.com/kevin-biot/IaC.git .
+   ```
+
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-2. **Initialize Pulumi stack**:
+3. **Initialize Pulumi (no passphrase needed!)**:
    ```bash
+   pulumi login --local
    pulumi stack init dev
-   pulumi config set student-infrastructure:namespace $STUDENT_NAMESPACE
+   pulumi config set studentNamespace $STUDENT_NAMESPACE
    ```
 
-3. **Complete the TODOs in index.ts**
+4. **Deploy Tekton build infrastructure**:
+   ```bash
+   oc apply -f tekton/
+   ```
 
-4. **Deploy infrastructure**:
+5. **Deploy infrastructure with Pulumi**:
    ```bash
    pulumi up
    ```
 
-## Components to Build
-- Redis database and message broker
-- Web application with Redis integration  
-- Background job worker
-- Load generator with web interface
-- Redis Commander for data visualization
+## Components You'll Build
+- Tekton/Shipwright build pipeline for Node.js application
+- PostgreSQL database deployment
+- Web application deployment (using Tekton-built image)
+- OpenShift route for external access
+- RBAC and security policies
 
 ## Success Criteria
-✅ All 5 pods running in OpenShift console
-✅ Web application accessible via browser
-✅ Redis Commander showing live data
-✅ Load generator creating traffic
-✅ Background worker processing jobs
+✅ Shipwright build completes successfully
+✅ All pods running in OpenShift console
+✅ Web application accessible via route
+✅ Form submission works with database persistence
+✅ No Docker required on student machine!
 EOF
 fi
 
-# Set up Day 2 Tekton exercise structure
-mkdir -p /home/coder/workspace/labs/day2-tekton
-cd /home/coder/workspace/labs/day2-tekton
-
-if [ ! -f README.md ]; then
-    cat > README.md << 'EOF'
-# Day 2: CI/CD Pipelines with Tekton
-
-## Objective
-Build an enterprise-grade CI/CD pipeline using Tekton and Shipwright for automated application delivery.
-
-## Pipeline Architecture
-1. **Git Clone** - Checkout source code
-2. **Maven Build** - Compile and test Java application
-3. **Shipwright Build** - Create container image
-4. **Deploy** - Rolling update to OpenShift
-5. **Test** - Automated validation
-
-## Getting Started
-
-1. **Deploy pipeline infrastructure**:
-   ```bash
-   oc apply -f tekton/clustertasks/
-   oc apply -f tekton/pipeline.yaml
-   oc apply -f shipwright/build/
-   ```
-
-2. **Trigger pipeline execution**:
-   ```bash
-   oc create -f tekton/pipeline-run.yaml
-   ```
-
-3. **Monitor pipeline progress**:
-   ```bash
-   tkn pipelinerun logs --last -f
-   ```
-
-## Advanced Features
-- Parallel task execution
-- Conditional pipeline logic
-- GitOps integration with ArgoCD
-- Security scanning in builds
-- Multi-environment deployments
-
-## Success Criteria
-✅ Pipeline executes all stages successfully
-✅ Container image built and pushed to registry
-✅ Application deployed with zero downtime
-✅ Automated tests pass
-✅ GitOps sync successful
-EOF
-fi
-
-# Set up Day 3 GitOps exercise structure
-mkdir -p /home/coder/workspace/labs/day3-gitops
-cd /home/coder/workspace/labs/day3-gitops
-
-if [ ! -f README.md ]; then
-    cat > README.md << 'EOF'
-# Day 3: GitOps with ArgoCD
-
-## Objective
-Implement GitOps workflows using ArgoCD for automated application deployment and management.
-
-## GitOps Principles
-1. **Declarative** - Describe desired state in Git
-2. **Versioned** - All changes tracked in version control
-3. **Pulled** - Deployment agents pull changes automatically
-4. **Continuously Reconciled** - Automatic drift detection and correction
-
-## Getting Started
-
-1. **Access ArgoCD UI**:
-   ```bash
-   # Get ArgoCD admin password
-   argocd admin initial-password -n argocd
-   
-   # Login via CLI
-   argocd login <argocd-server>
-   ```
-
-2. **Create Application**:
-   ```bash
-   argocd app create my-webapp \
-     --repo <your-git-repo> \
-     --path k8s \
-     --dest-server https://kubernetes.default.svc \
-     --dest-namespace $STUDENT_NAMESPACE
-   ```
-
-3. **Sync Application**:
-   ```bash
-   argocd app sync my-webapp
-   ```
-
-## Workshop Activities
-- Create ArgoCD applications
-- Configure Git repositories for GitOps
-- Implement application health checks
-- Set up automated sync policies
-- Monitor deployment status and health
-
-## Success Criteria
-✅ ArgoCD application created and synced
-✅ Git-based configuration changes trigger deployments
-✅ Application health monitoring working
-✅ Rollback functionality tested
-✅ Multi-environment promotion workflow
-EOF
-fi
+# Set up Day 2 and Day 3 as before
+mkdir -p /home/coder/workspace/labs/day2-tekton /home/coder/workspace/labs/day3-gitops
 
 # Copy student quick start guide to workspace
 if [ -f /home/coder/STUDENT-QUICK-START.md ]; then
@@ -374,7 +260,7 @@ if [ -f /home/coder/STUDENT-QUICK-START.md ]; then
 fi
 
 # Set up examples directory with useful references
-mkdir -p /home/coder/workspace/examples/{kubernetes,tekton,pulumi,docker,argocd}
+mkdir -p /home/coder/workspace/examples/{kubernetes,tekton,pulumi,shipwright,argocd}
 
 # Auto-login to OpenShift if credentials are available
 if [ -n "$OPENSHIFT_TOKEN" ] && [ -n "$OPENSHIFT_SERVER" ]; then
@@ -382,10 +268,11 @@ if [ -n "$OPENSHIFT_TOKEN" ] && [ -n "$OPENSHIFT_SERVER" ]; then
     oc project "$STUDENT_NAMESPACE" 2>/dev/null || echo "Note: Project $STUDENT_NAMESPACE not found"
 fi
 
-# Set up shell environment
+# Set up shell environment with all necessary variables
 echo "export STUDENT_NAMESPACE=$STUDENT_NAMESPACE" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_UPDATE_CHECK=true" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_CONFIRMATIONS=true" >> /home/coder/.bashrc
+echo "export PULUMI_CONFIG_PASSPHRASE=\"workshop123\"" >> /home/coder/.bashrc
 
 # Create oc config to set default project context
 mkdir -p /home/coder/.kube
