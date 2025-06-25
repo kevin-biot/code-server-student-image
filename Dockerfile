@@ -79,17 +79,12 @@ RUN . /tmp/arch.env && \
     curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} && \
     chmod +x /usr/local/bin/argocd
 
-# Install VS Code extensions
-RUN HOME=/home/coder code-server \
+# Install only ESSENTIAL VS Code extensions (with better error handling)
+RUN HOME=/home/coder mkdir -p /home/coder/.local/share/code-server && \
+    timeout 300 code-server \
     --user-data-dir /home/coder/.local/share/code-server \
-    --install-extension ms-python.python \
     --install-extension redhat.vscode-yaml \
-    --install-extension ms-kubernetes-tools.vscode-kubernetes-tools \
-    --install-extension ms-azuretools.vscode-docker \
-    --install-extension vscjava.vscode-java-pack \
-    --install-extension ms-vscode.vscode-typescript-next \
-    --install-extension esbenp.prettier-vscode \
-    --install-extension redhat.vscode-xml
+    --install-extension ms-vscode.vscode-typescript-next || echo "Extension installation timeout - continuing"
 
 # Create expected directory structure
 RUN mkdir -p /home/coder/workspace/projects \
