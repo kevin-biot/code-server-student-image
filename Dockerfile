@@ -47,30 +47,42 @@ RUN . /tmp/arch.env && \
     wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} && \
     chmod +x /usr/local/bin/yq
 
-# oc and kubectl - FIXED with better error handling and fallback
+# kubectl - Install directly from official source (more reliable than OpenShift mirror)
 RUN . /tmp/arch.env && \
-    echo "Downloading OpenShift client for ${ARCH}..." && \
-    # Try stable first, then latest as fallback
-    if curl -fsSL -o /tmp/openshift-client.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${ARCH}/openshift-client-linux.tar.gz"; then \
-        echo "Downloaded stable OpenShift client"; \
-    elif curl -fsSL -o /tmp/openshift-client.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/${ARCH}/openshift-client-linux.tar.gz"; then \
-        echo "Downloaded latest OpenShift client"; \
+    echo "Installing kubectl for ${ARCH}..." && \
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/ && \
+    echo "kubectl installation completed"
+
+# oc - Try multiple sources with comprehensive fallbacks
+RUN . /tmp/arch.env && \
+    echo "Installing OpenShift CLI for ${ARCH}..." && \
+    # Method 1: Try stable release
+    if curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${ARCH}/openshift-client-linux.tar.gz" && \
+       file /tmp/oc.tar.gz | grep -q gzip && \
+       tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
+        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
+        rm /tmp/oc.tar.gz && \
+        echo "oc installed from stable release"; \
+    # Method 2: Try latest release
+    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/${ARCH}/openshift-client-linux.tar.gz" && \
+         file /tmp/oc.tar.gz | grep -q gzip && \
+         tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
+        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
+        rm /tmp/oc.tar.gz && \
+        echo "oc installed from latest release"; \
+    # Method 3: Try specific version
+    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.15.0/${ARCH}/openshift-client-linux.tar.gz" && \
+         file /tmp/oc.tar.gz | grep -q gzip && \
+         tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
+        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
+        rm /tmp/oc.tar.gz && \
+        echo "oc installed from version 4.15.0"; \
     else \
-        echo "OpenShift client download failed, installing kubectl only"; \
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
-        chmod +x kubectl && mv kubectl /usr/local/bin/; \
-        exit 0; \
-    fi && \
-    # Verify the download is actually a gzip file
-    if file /tmp/openshift-client.tar.gz | grep -q gzip; then \
-        tar -xzf /tmp/openshift-client.tar.gz -C /usr/local/bin/ && \
-        rm /tmp/openshift-client.tar.gz && \
-        echo "OpenShift client installed successfully"; \
-    else \
-        echo "Downloaded file is not a valid gzip archive, installing kubectl fallback"; \
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
-        chmod +x kubectl && mv kubectl /usr/local/bin/ && \
-        rm /tmp/openshift-client.tar.gz; \
+        echo "All oc download methods failed, creating oc symlink to kubectl"; \
+        ln -s /usr/local/bin/kubectl /usr/local/bin/oc && \
+        rm -f /tmp/oc.tar.gz; \
     fi
 
 # Tekton CLI - IMPROVED with better error handling
@@ -143,8 +155,8 @@ RUN echo "=== Verifying tool installations ===" && \
     python3 --version && \
     java -version && \
     yq --version && \
-    (oc version --client || echo "oc not available, kubectl fallback used") && \
     kubectl version --client && \
+    (oc version --client || echo "oc symlinked to kubectl") && \
     (tkn version || echo "tkn installation issue") && \
     helm version && \
     pulumi version && \
