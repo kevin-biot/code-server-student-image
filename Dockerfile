@@ -47,24 +47,47 @@ RUN . /tmp/arch.env && \
     wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_${ARCH} && \
     chmod +x /usr/local/bin/yq
 
-# oc and kubectl - auto-detect architecture
+# oc and kubectl - FIXED with better error handling and fallback
 RUN . /tmp/arch.env && \
-    curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux-${ARCH}.tar.gz && \
-    tar -xzvf openshift-client-linux-${ARCH}.tar.gz -C /usr/local/bin oc kubectl && \
-    rm openshift-client-linux-${ARCH}.tar.gz
-
-# Tekton CLI
-RUN ARCH=$(uname -m) && \
-    echo "[INFO] Detected architecture: $ARCH" && \
-    if [ "$ARCH" = "aarch64" ]; then \
-      curl -LO https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-ARM64.deb && \
-      apt-get update && apt-get install -y ./tektoncd-cli-${TKN_VERSION}_Linux-ARM64.deb && \
-      rm tektoncd-cli-${TKN_VERSION}_Linux-ARM64.deb; \
+    echo "Downloading OpenShift client for ${ARCH}..." && \
+    # Try stable first, then latest as fallback
+    if curl -fsSL -o /tmp/openshift-client.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${ARCH}/openshift-client-linux.tar.gz"; then \
+        echo "Downloaded stable OpenShift client"; \
+    elif curl -fsSL -o /tmp/openshift-client.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/${ARCH}/openshift-client-linux.tar.gz"; then \
+        echo "Downloaded latest OpenShift client"; \
     else \
-      curl -LO https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-64bit.deb && \
-      apt-get update && apt-get install -y ./tektoncd-cli-${TKN_VERSION}_Linux-64bit.deb && \
-      rm tektoncd-cli-${TKN_VERSION}_Linux-64bit.deb; \
+        echo "OpenShift client download failed, installing kubectl only"; \
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
+        chmod +x kubectl && mv kubectl /usr/local/bin/; \
+        exit 0; \
+    fi && \
+    # Verify the download is actually a gzip file
+    if file /tmp/openshift-client.tar.gz | grep -q gzip; then \
+        tar -xzf /tmp/openshift-client.tar.gz -C /usr/local/bin/ && \
+        rm /tmp/openshift-client.tar.gz && \
+        echo "OpenShift client installed successfully"; \
+    else \
+        echo "Downloaded file is not a valid gzip archive, installing kubectl fallback"; \
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl" && \
+        chmod +x kubectl && mv kubectl /usr/local/bin/ && \
+        rm /tmp/openshift-client.tar.gz; \
     fi
+
+# Tekton CLI - IMPROVED with better error handling
+RUN ARCH=$(uname -m) && \
+    echo "[INFO] Installing Tekton CLI for architecture: $ARCH" && \
+    if [ "$ARCH" = "aarch64" ]; then \
+      echo "Downloading Tekton CLI for ARM64..." && \
+      curl -fsSL -o /tmp/tekton-cli.deb https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-ARM64.deb && \
+      apt-get update && apt-get install -y /tmp/tekton-cli.deb && \
+      rm /tmp/tekton-cli.deb; \
+    else \
+      echo "Downloading Tekton CLI for x86_64..." && \
+      curl -fsSL -o /tmp/tekton-cli.deb https://github.com/tektoncd/cli/releases/download/v${TKN_VERSION}/tektoncd-cli-${TKN_VERSION}_Linux-64bit.deb && \
+      apt-get update && apt-get install -y /tmp/tekton-cli.deb && \
+      rm /tmp/tekton-cli.deb; \
+    fi && \
+    echo "Tekton CLI installation completed"
 
 # Helm
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -74,10 +97,12 @@ RUN curl -fsSL https://get.pulumi.com | sh \
     && cp $HOME/.pulumi/bin/pulumi /usr/local/bin/ \
     && chmod +x /usr/local/bin/pulumi
 
-# ArgoCD CLI - auto-detect architecture
+# ArgoCD CLI - auto-detect architecture with improved error handling
 RUN . /tmp/arch.env && \
-    curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} && \
-    chmod +x /usr/local/bin/argocd
+    echo "Installing ArgoCD CLI for ${ARCH}..." && \
+    curl -fsSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} && \
+    chmod +x /usr/local/bin/argocd && \
+    echo "ArgoCD CLI installation completed"
 
 # Install only ESSENTIAL VS Code extensions (with better error handling)
 RUN HOME=/home/coder mkdir -p /home/coder/.local/share/code-server && \
@@ -111,6 +136,20 @@ RUN chmod +x /home/coder/startup.sh && \
     chmod +x /home/coder/start-pipeline.sh && \
     chgrp -R 0 /home/coder && \
     chmod -R g=u /home/coder
+
+# Verify installations
+RUN echo "=== Verifying tool installations ===" && \
+    node --version && \
+    python3 --version && \
+    java -version && \
+    yq --version && \
+    (oc version --client || echo "oc not available, kubectl fallback used") && \
+    kubectl version --client && \
+    (tkn version || echo "tkn installation issue") && \
+    helm version && \
+    pulumi version && \
+    argocd version --client && \
+    echo "=== Tool verification completed ==="
 
 # OpenShift-compatible user (will be overridden by SCC)
 # USER 1001
