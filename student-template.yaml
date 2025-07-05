@@ -331,13 +331,13 @@ parameters:
   value: "gp3-csi"
 - name: MEMORY_LIMIT
   description: Memory limit per student
-  value: 2Gi
+  value: 600Mi
 - name: MEMORY_REQUEST
   description: Memory request per student
-  value: 1Gi
+  value: 300Mi
 - name: CPU_LIMIT
   description: CPU limit per student
-  value: 1000m
+  value: 400m
 - name: CPU_REQUEST
   description: CPU request per student
   value: 200m
