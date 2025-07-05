@@ -1,114 +1,151 @@
-# Quick Start Guide
+# DevOps Bootcamp - Instructor Quick Start Guide
 
-## Prerequisites
-- OpenShift cluster access with `oc` CLI
-- Logged in as cluster admin or user with sufficient permissions
-- `devops` namespace exists (for building images)
+**Production-ready AWS OpenShift Container Service (OCS) deployment for DevOps training.**
 
-## 1. Build the Image (First Time)
+## 🎯 Prerequisites
 
+- ✅ AWS OpenShift cluster running
+- ✅ `oc` CLI installed and logged in as cluster-admin
+- ✅ OpenShift GitOps operator installed
+- ✅ Shipwright operator installed
+- ✅ Git repository access
+
+## 🚀 One-Command Deployment
+
+### Step 1: Build Code-Server Image
 ```bash
+# Clone repository
+git clone https://github.com/kevin-biot/code-server-student-image.git
+cd code-server-student-image
+
+# Build the code-server image with all DevOps tools
 ./build-and-verify.sh
 ```
-The script automatically normalizes your system architecture and triggers the
-build with the appropriate `ARCH` value for multi-arch support.
 
-## 2. Deploy Student Environments
-
-### Option A: Using the Script (Recommended)
+### Step 2: Deploy Complete Student Environment
 ```bash
-# Make scripts executable
-chmod +x deploy-students.sh monitor-students.sh
+# Deploy 25 students with all RBAC and authentication
+./complete-student-setup-simple.sh 1 25
 
-# Deploy 5 students with your cluster domain
-./deploy-students.sh -n 5 -d apps.your-cluster-domain.com
-
-# Force redeploy if namespaces already exist
-./deploy-students.sh -n 5 -d apps.your-cluster-domain.com --force
-
-# Check deployment status
-./monitor-students.sh
+# This creates:
+# - 25 student namespaces with code-server pods
+# - User accounts with proper permissions
+# - OAuth authentication (htpasswd provider)
+# - ArgoCD access for Day 3 GitOps exercises
 ```
 
-If a namespace already exists, deployment is skipped unless you use `--force`.
+## 📋 Student Access Information
 
-### Option B: Using Make (if you have make installed)
+**Announce to students:**
+
+### OpenShift Console Access
+- **URL**: `https://console-openshift-console.apps.YOUR-CLUSTER.com`
+- **Username**: `student01`, `student02`, ... `student25`
+- **Password**: `DevOps2025!`
+- **Purpose**: Watch pipelines, ArgoCD applications, monitor deployments
+
+### Code-Server Development Environment
+- **URL Pattern**: `https://studentXX-code-server.apps.YOUR-CLUSTER.com`
+- **Examples**:
+  - student01: `https://student01-code-server.apps.YOUR-CLUSTER.com`
+  - student02: `https://student02-code-server.apps.YOUR-CLUSTER.com`
+- **Login**: Individual auto-generated passwords (displayed in browser)
+- **Purpose**: Development, CLI access, exercise execution
+
+## 🛠️ Tools Pre-installed in Code-Server
+
+Each student environment includes:
+- **Kubernetes/OpenShift**: `oc`, `kubectl`
+- **CI/CD**: `tkn` (Tekton), `helm`
+- **GitOps**: `argocd`
+- **Infrastructure as Code**: `pulumi`
+- **Development**: Node.js 20, Python 3.11, Java 17, Maven, Gradle
+- **Utilities**: `yq`, `jq`, `git`, `curl`, `vim`, etc.
+
+## 🔍 Validation Commands
+
 ```bash
-# Deploy 3 students (default)
-make deploy CLUSTER_DOMAIN=apps.your-cluster-domain.com
+# Check all students are running
+oc get pods --all-namespaces | grep code-server | grep Running
 
-# Deploy 10 students
-make deploy STUDENT_COUNT=10
+# Test student authentication
+oc login -u student01 -p 'DevOps2025!'
+oc get pods -n student01
 
-# Monitor status
-make monitor
+# Verify student cannot access other namespaces
+oc get pods -n student02  # Should be forbidden
+
+# Check ArgoCD access for Day 3
+oc get pods -n openshift-gitops
 ```
 
-## 3. Access Student Environments
-
-After deployment completes:
-1. Check `student-credentials.txt` for URLs and passwords
-2. Each student gets: `https://studentXX-code-server.apps.your-cluster-domain.com`
-3. Login with the generated password from the credentials file
-
-## 4. Common Operations
+## 🧹 Cleanup Commands
 
 ```bash
-# Check status
-./monitor-students.sh
+# Remove all student environments
+./teardown-students.sh all all confirm
 
-# Deploy specific students
-./deploy-students.sh -s alice,bob,charlie -d apps.your-cluster-domain.com
-
-# Clean up all environments
-./deploy-students.sh -n 5 --cleanup  # adjust number as needed
-
-# View logs
-make logs
-
-# Quick status
-oc get pods -A -l app=code-server
+# Remove user accounts (if needed)
+for i in {01..25}; do
+  oc delete user student${i} || true
+  oc delete identity htpasswd_provider:student${i} || true
+done
 ```
 
-## 5. Troubleshooting
+## 🎓 Course Structure
 
-### Build Issues
+### Day 1: Infrastructure as Code (Pulumi)
+- Students use **Code-Server** for development
+- Students use **Console** to watch resource creation
+
+### Day 2: CI/CD Pipelines (Tekton)  
+- Students create pipelines in **Code-Server**
+- Students monitor pipeline execution in **Console**
+
+### Day 3: GitOps (ArgoCD)
+- Students manage applications via **ArgoCD CLI** in Code-Server
+- Students watch application sync in **ArgoCD Console**
+
+## 🔐 Security Model
+
+- ✅ **Namespace Isolation**: Students have admin access only to their namespace
+- ✅ **Shared Resource Access**: View-only access to `devops` and `openshift-gitops`
+- ✅ **Console Visibility**: Students can see cluster structure for learning
+- ✅ **No Cluster Admin**: Students cannot modify cluster-level resources
+- ✅ **Multi-tenant Safe**: Students cannot interfere with each other
+
+## 📚 Additional Resources
+
+- **Student Guide**: `STUDENT-QUICK-START.md`
+- **Troubleshooting**: Check pod logs, events, RBAC with `oc describe`
+- **Legacy Scripts**: Available in `legacy/` directory if needed
+
+## 🆘 Common Issues
+
+### Students Can't Login to Console
 ```bash
-# Check build status
-oc get builds -n devops
-oc describe build code-server-student-image -n devops
+# Check OAuth pods
+oc get pods -n openshift-authentication
+# Restart OAuth if needed
+oc delete pods -n openshift-authentication -l app=oauth-openshift
 ```
 
-### Deployment Issues
+### Code-Server Not Responding
 ```bash
-# Check specific student
-oc get all -n student01
-oc describe pod -n student01
-oc logs deployment/code-server -n student01
+# Check student pod status
+oc get pods -n studentXX
+oc describe pod -n studentXX
+oc logs -n studentXX -l app=code-server
 ```
 
-### Route Issues
+### Build Failures
 ```bash
-# Verify routes
-oc get routes -A | grep code-server
+# Check Shipwright build status
+oc get buildrun -n devops
+oc logs buildrun/BUILDRUN-NAME -n devops
 ```
 
-## 6. Customization
+---
 
-- **Add tools**: Edit `Dockerfile`
-- **Change resources**: Modify `student-template.yaml`
-- **Customize welcome**: Edit `startup.sh`
-- **Add extensions**: Update Dockerfile with additional VS Code extensions
-
-## Next Steps
-
-1. Test with 1-2 students first
-2. Verify all tools work as expected
-3. Scale up to your full class size
-4. Set up regular monitoring and cleanup procedures
-
-## Support
-
-- Check the main README.md for detailed documentation
-- Use `make help` for available commands
-- Monitor with `./monitor-students.sh`
+**🎯 Total Setup Time: ~15-20 minutes for 25 students**
+**🎓 Ready for production DevOps bootcamp delivery!**

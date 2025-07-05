@@ -1,0 +1,36 @@
+apiVersion: shipwright.io/v1beta1
+kind: ClusterBuildStrategy
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: "{\"apiVersion\":\"shipwright.io/v1beta1\",\"kind\":\"ClusterBuildStrategy\",\"metadata\":{\"annotations\":{},\"name\":\"buildah-shipwright-kevin\"},\"spec\":{\"buildSteps\":[{\"args\":[\"-c\",\"set
+      -e\\necho \\\"\U0001F4C1 Current directory: $(pwd)\\\"\\nls -la\\necho \\\"\U0001F3D7️
+      \ Building image with Dockerfile: $(params.dockerfile)\\\"\\nbuildah --storage-driver=$(params.storage-driver)
+      bud \\\\\\n  -f $(params.dockerfile) \\\\\\n  -t $(params.shp-output-image)
+      \\\\\\n  .\\necho \\\"\U0001F4E4 Pushing image...\\\"\\nbuildah --storage-driver=$(params.storage-driver)
+      push \\\\\\n  $(params.shp-output-image) \\\\\\n  docker://$(params.shp-output-image)\\necho
+      \\\"✅ Build and push complete\\\"\\n\"],\"command\":[\"/bin/bash\"],\"image\":\"quay.io/containers/buildah:v1.39.3\",\"name\":\"build-and-push\",\"securityContext\":{\"privileged\":true},\"workingDir\":\"$(params.shp-source-root)\"}],\"parameters\":[{\"default\":\"Dockerfile\",\"description\":\"Dockerfile
+      path\",\"name\":\"dockerfile\",\"type\":\"string\"},{\"default\":\"vfs\",\"description\":\"Storage
+      driver (vfs/overlay)\",\"name\":\"storage-driver\",\"type\":\"string\"},{\"description\":\"Fully
+      qualified image name to push (auto-injected)\",\"name\":\"shp-output-image\",\"type\":\"string\"},{\"description\":\"Git
+      context directory (auto-injected)\",\"name\":\"shp-source-root\",\"type\":\"string\"}]}}\n"
+  creationTimestamp: "2025-07-01T12:35:03Z"
+  generation: 1
+  name: buildah-shipwright-kevin
+  resourceVersion: "4066832"
+  uid: 3526bd90-219a-4c53-a383-4d0c233ca411
+spec:
+  parameters:
+  - default: Dockerfile
+    description: Dockerfile path
+    name: dockerfile
+    type: string
+  - default: vfs
+    description: Storage driver (vfs/overlay)
+    name: storage-driver
+    type: string
+  - description: Fully qualified image name to push (auto-injected)
+    name: shp-output-image
+    type: string
+  - description: Git context directory (auto-injected)
+    name: shp-source-root
+    type: string

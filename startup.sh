@@ -21,7 +21,7 @@ if [[ ! -f /home/coder/.gitconfig && -f /home/coder/.gitconfig-template ]]; then
     sed -i "s/STUDENT_ID/$STUDENT_NAMESPACE/g" /home/coder/.gitconfig
 fi
 
-# Create comprehensive welcome message with updated Tekton/Shipwright approach
+# Create comprehensive welcome message with updated instructor-prebuilt approach
 cat > /home/coder/workspace/README.md << 'EOF'
 # 🚀 DevOps Workshop Environment
 
@@ -42,11 +42,11 @@ If you've never used a code-server/VS Code environment before, please **click on
 
 ## 📚 Workshop Structure
 
-### 🏗️ Day 1: Infrastructure as Code with Pulumi + Tekton
+### 🏗️ Day 1: Infrastructure as Code with Pulumi (Focus: IaC Concepts)
 - **Location**: `labs/day1-pulumi/`
-- **Focus**: Cloud-native infrastructure with Tekton/Shipwright builds
-- **Tools**: Pulumi, Tekton, Shipwright, OpenShift Routes
-- **No Docker Required**: Uses cloud-native build pipelines
+- **Focus**: Learning Infrastructure as Code with Pulumi
+- **Tools**: Pulumi, Kubernetes, OpenShift Routes, PostgreSQL
+- **Approach**: Uses instructor pre-built images for reliable, fast deployment
 
 ### 🔄 Day 2: Advanced CI/CD Pipelines
 - **Location**: `labs/day2-tekton/`  
@@ -87,7 +87,7 @@ If you've never used a code-server/VS Code environment before, please **click on
 workspace/
 ├── projects/          # Your main development work
 ├── labs/
-│   ├── day1-pulumi/   # Day 1: Infrastructure as Code + Tekton
+│   ├── day1-pulumi/   # Day 1: Infrastructure as Code with Pulumi
 │   ├── day2-tekton/   # Day 2: Advanced CI/CD Pipelines
 │   └── day3-gitops/   # Day 3: GitOps with ArgoCD
 ├── examples/          # Sample code and references
@@ -98,29 +98,34 @@ workspace/
 
 ### **OpenShift Authentication**
 ```bash
-# Login to your OpenShift cluster
-oc login <cluster-url>
+# Login to your OpenShift cluster (if needed)
+oc whoami
 
 # Verify your access and namespace
-oc whoami
 oc project $STUDENT_NAMESPACE
 ```
 
-### **Day 1: Pulumi + Tekton Infrastructure**
+### **Day 1: Pulumi Infrastructure as Code**
 ```bash
 cd labs/day1-pulumi
 
-# Clone workshop repository
-git clone https://github.com/kevin-biot/IaC.git .
+# Clone workshop repository (this runs automatically)
+./clone-workshop-repos.sh
 
-# Setup environment (no passphrase needed!)
+# Navigate to the IaC project
+cd IaC
+
+# Setup Pulumi environment (no passphrase needed!)
 npm install
 pulumi login --local
 pulumi stack init dev
 pulumi config set studentNamespace $STUDENT_NAMESPACE
+pulumi config set --secret dbPassword MySecurePassword123
 
-# Deploy with cloud-native builds
-oc apply -f tekton/
+# Preview what will be deployed
+pulumi preview
+
+# Deploy infrastructure (fast - uses pre-built images!)
 pulumi up
 ```
 
@@ -139,31 +144,29 @@ argocd login <argocd-server>
 argocd app create my-app --repo <git-repo> --path manifests
 ```
 
-### **Development Workflow (Updated for Tekton)**
+### **Development Workflow (Simplified for Learning)**
 ```bash
-# Create new project
-mkdir projects/my-app && cd projects/my-app
-git init
+# Day 1: Focus on Infrastructure as Code
+cd labs/day1-pulumi/IaC
+pulumi preview  # See what will be created
+pulumi up       # Deploy infrastructure
+oc get all      # View deployed resources
+oc get routes   # Get application URL
 
-# Tekton build workflow
-oc create -f tekton/pipeline-run.yaml
-tkn pipelinerun logs --last -f
+# Scale your application
+# Edit index.ts to change replicas, then:
+pulumi preview  # Preview changes
+pulumi up       # Apply changes
 
-# Monitor builds and deployments
-tkn pipeline list
-oc get builds,buildruns
-oc get pods
-
-# GitOps management
-argocd app list
-argocd app sync my-app
+# Clean up resources
+pulumi destroy
 ```
 
 ## 🔗 Important Links
 
 When your applications are deployed, you can access:
 
-- 🌐 **Your Web Application**: Check `oc get routes` for URL
+- 🌐 **Your Web Application**: Check `pulumi stack output appUrl` or `oc get routes`
 - 🖥️ **OpenShift Console**: `https://console-openshift-console.apps.cluster.domain`
 - 📈 **Tekton Dashboard**: `https://tekton-dashboard.apps.cluster.domain`
 - 🔄 **ArgoCD UI**: `https://argocd.apps.cluster.domain`
@@ -176,78 +179,258 @@ When your applications are deployed, you can access:
 4. **Extensions**: Pre-installed extensions for YAML, Java, TypeScript
 5. **Auto-completion**: Tab completion enabled for all CLI tools
 6. **No Passphrases**: Pulumi passphrase pre-configured as `workshop123`
-7. **Cloud Builds**: No Docker needed - all builds happen in Tekton/Shipwright
+7. **Fast Deployment**: Day 1 uses pre-built images for reliable workshop experience
+
+## 📋 Day 1 Learning Objectives
+
+**Infrastructure as Code with Pulumi:**
+- ✅ Understand declarative infrastructure management
+- ✅ Learn resource dependencies and ordering
+- ✅ Practice configuration management with secrets
+- ✅ Experience infrastructure scaling and updates
+- ✅ Explore Kubernetes networking and services
+- ✅ Use OpenShift Routes for external access
+
+**Key Concepts Demonstrated:**
+- Pulumi stack management
+- Resource providers and configurations
+- Database deployment and persistence
+- Application deployment patterns
+- Service networking and discovery
+- External access configuration
 
 ## 🆘 Need Help?
 
 - **Documentation**: Check `examples/` directory for samples
-- **Logs**: Use `oc logs`, `tkn logs`, or check OpenShift console
+- **Logs**: Use `oc logs`, `pulumi logs`, or check OpenShift console
 - **Debugging**: All tools support `--help` flag
 - **Instructor**: Raise your hand or ask in chat
 
 ---
 
-**🎯 Ready to start your cloud-native DevOps journey? Begin with Day 1 in the `labs/day1-pulumi` directory!**
+**🎯 Ready to start your Infrastructure as Code journey? Begin with Day 1 in the `labs/day1-pulumi` directory!**
 EOF
 
-# Set up Day 1 Pulumi exercise structure with updated approach
+# Set up Day 1 Pulumi exercise structure with updated instructor-prebuilt approach
 mkdir -p /home/coder/workspace/labs/day1-pulumi
 cd /home/coder/workspace/labs/day1-pulumi
 
 if [ ! -f README.md ]; then
     cat > README.md << 'EOF'
-# Day 1: Infrastructure as Code with Pulumi + Tekton
+# Day 1: Infrastructure as Code with Pulumi
 
-## Objective
-Use Pulumi with Tekton/Shipwright to provision cloud-native infrastructure including web application builds and database deployment.
+## 🎯 Objective
+Learn Infrastructure as Code concepts using Pulumi to deploy a complete web application stack with database on OpenShift.
 
-## New Cloud-Native Approach
-- ✅ **No Docker required** - Uses Tekton/Shipwright for builds
-- ✅ **Enterprise-ready** - Real CI/CD pipeline patterns
-- ✅ **Simplified setup** - No local Docker complexity
+## 🚀 Workshop Approach: Focus on Learning IaC
+- ✅ **Instructor pre-built images** - No build delays or complexity
+- ✅ **Fast, reliable deployments** - Focus on Pulumi concepts
+- ✅ **Workshop-optimized** - Maximum learning, minimum debugging
+- ✅ **Production patterns** - Real infrastructure management
 
-## Getting Started
+## 📋 What You'll Build
+- PostgreSQL database deployment with persistent storage
+- Node.js web application deployment using instructor-built image  
+- Kubernetes services for internal networking
+- OpenShift routes for external access
+- Resource dependencies and configuration management
+- Secrets handling and environment configuration
 
-1. **Clone workshop repository**:
+## 🛠️ Getting Started
+
+### Step 1: Access Workshop Repository
+```bash
+# The repository is automatically cloned for you
+cd ~/workspace/labs/day1-pulumi
+
+# Clone the IaC workshop content
+./clone-workshop-repos.sh
+
+# Navigate to the main project
+cd IaC
+```
+
+### Step 2: Initialize Pulumi Environment
+```bash
+# Install Node.js dependencies
+npm install
+
+# Initialize Pulumi (no passphrase needed!)
+pulumi login --local
+pulumi stack init dev
+
+# Configure your environment
+pulumi config set studentNamespace $STUDENT_NAMESPACE
+pulumi config set --secret dbPassword MySecurePassword123
+
+# Verify configuration
+pulumi config
+```
+
+### Step 3: Preview Your Infrastructure
+```bash
+# See what Pulumi will create (dry run)
+pulumi preview
+```
+
+**You should see:**
+- ✅ Kubernetes Provider for your namespace
+- ✅ PostgreSQL Deployment and Service
+- ✅ Web Application Deployment (using pre-built image)
+- ✅ Web Application Service
+- ✅ OpenShift Route for external access
+
+### Step 4: Deploy Your Infrastructure
+```bash
+# Deploy everything (fast - no builds needed!)
+pulumi up
+
+# Type 'yes' when prompted
+```
+
+### Step 5: Verify Your Deployment
+```bash
+# Get your application URL
+pulumi stack output appUrl
+
+# Check all deployed resources
+oc get all -n $STUDENT_NAMESPACE
+
+# Get the route URL
+oc get routes -n $STUDENT_NAMESPACE
+
+# Test your application
+curl $(oc get route web-route -n $STUDENT_NAMESPACE -o jsonpath='{.spec.host}')
+```
+
+## 🔧 Learning Exercises
+
+### Exercise 1: Understanding Resource Dependencies
+1. **Examine the Pulumi code** - Open `index.ts` and understand:
+   - How PostgreSQL is deployed first
+   - How the web app depends on the database service
+   - How the route depends on the web service
+
+2. **Observe the deployment order** - Notice how Pulumi automatically handles dependencies
+
+### Exercise 2: Configuration Management
+1. **Update the database password**:
    ```bash
-   git clone https://github.com/kevin-biot/IaC.git .
+   pulumi config set --secret dbPassword NewSecurePassword456
+   pulumi preview  # See what will change
+   pulumi up       # Apply the change
    ```
 
-2. **Install dependencies**:
-   ```bash
-   npm install
+2. **Observe how secrets are handled** - Notice encrypted values in config
+
+### Exercise 3: Infrastructure Scaling
+1. **Scale your web application** - Edit `index.ts`:
+   ```typescript
+   spec: {
+     replicas: 3, // Change from 1 to 3
+     // ... rest of configuration
+   }
    ```
 
-3. **Initialize Pulumi (no passphrase needed!)**:
+2. **Apply the scaling**:
    ```bash
-   pulumi login --local
-   pulumi stack init dev
-   pulumi config set studentNamespace $STUDENT_NAMESPACE
+   pulumi preview  # Preview the change
+   pulumi up       # Apply scaling
    ```
 
-4. **Deploy Tekton build infrastructure**:
+3. **Monitor the scaling**:
    ```bash
-   oc apply -f tekton/
+   oc get pods -n $STUDENT_NAMESPACE -w
    ```
 
-5. **Deploy infrastructure with Pulumi**:
+### Exercise 4: Infrastructure Updates
+1. **Modify resource labels** - Add custom labels to your deployments
+2. **Update environment variables** - Add new environment settings
+3. **Change resource limits** - Modify CPU/memory allocations
+
+### Exercise 5: Stack Management
+1. **Export stack state**:
    ```bash
-   pulumi up
+   pulumi stack export --file my-stack.json
    ```
 
-## Components You'll Build
-- Tekton/Shipwright build pipeline for Node.js application
-- PostgreSQL database deployment
-- Web application deployment (using Tekton-built image)
-- OpenShift route for external access
-- RBAC and security policies
+2. **View resource details**:
+   ```bash
+   pulumi stack --show-urns
+   ```
 
-## Success Criteria
-✅ Shipwright build completes successfully
-✅ All pods running in OpenShift console
-✅ Web application accessible via route
-✅ Form submission works with database persistence
-✅ No Docker required on student machine!
+3. **Clean up resources**:
+   ```bash
+   pulumi destroy
+   ```
+
+## 🏗️ Architecture Deep Dive
+
+### Resource Hierarchy
+```
+Pulumi Stack
+├── Kubernetes Provider (namespace-scoped)
+├── PostgreSQL Deployment
+│   ├── Bitnami PostgreSQL container
+│   ├── Environment variables (DB credentials)
+│   ├── Health checks (readiness/liveness)
+│   └── Persistent volume (emptyDir for workshop)
+├── PostgreSQL Service
+│   └── Internal ClusterIP (postgres-svc:5432)
+├── Web Application Deployment
+│   ├── Pre-built Node.js image (instructor-built)
+│   ├── Database connection configuration
+│   ├── Health checks
+│   └── Dependency on PostgreSQL service
+├── Web Application Service
+│   └── Internal ClusterIP (web-svc:80 → 8080)
+└── OpenShift Route
+    └── External HTTPS access (web-route-{namespace}.apps.cluster.domain)
+```
+
+### Key Learning Points
+
+**Infrastructure as Code Benefits:**
+- 📝 **Declarative** - Describe desired state, not procedures
+- 🔄 **Repeatable** - Same deployment every time
+- 📊 **Trackable** - Version control your infrastructure
+- 🔄 **Updatable** - Modify and redeploy safely
+- 🗑️ **Disposable** - Easy cleanup and recreation
+
+**Pulumi Concepts:**
+- 🏗️ **Resources** - Infrastructure components
+- 🔗 **Dependencies** - Automatic ordering and relationships
+- ⚙️ **Configuration** - Environment-specific settings
+- 🔐 **Secrets** - Encrypted sensitive data
+- 📤 **Outputs** - Information about deployed resources
+- 📚 **Stacks** - Isolated instances of your program
+
+**Kubernetes Patterns:**
+- 🏗️ **Deployments** - Declarative application management
+- 🌐 **Services** - Stable network endpoints
+- 🔗 **Routes** - External access to applications
+- 🔐 **Secrets** - Secure configuration data
+- 🏷️ **Labels** - Resource organization and selection
+
+## ✅ Success Criteria
+
+By the end of Day 1, you should have:
+- ✅ **Deployed a complete web application stack** using Pulumi
+- ✅ **Understanding of Infrastructure as Code concepts**
+- ✅ **Experience with Pulumi configuration and secrets**
+- ✅ **Knowledge of Kubernetes resource dependencies**
+- ✅ **Ability to scale and update infrastructure**
+- ✅ **Working web application** accessible via browser
+- ✅ **Database persistence** verified through form submissions
+
+## 🚀 Next Steps
+
+- **Day 2**: Advanced CI/CD pipelines with Tekton
+- **Day 3**: GitOps workflows with ArgoCD
+- **Advanced**: Multi-environment deployments
+- **Production**: Monitoring, logging, and observability
+
+**🎉 Great job on completing Day 1! You've learned the fundamentals of Infrastructure as Code!**
 EOF
 fi
 

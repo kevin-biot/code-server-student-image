@@ -1,0 +1,42 @@
+# ArgoCD AppProject and RBAC for student template
+# Add these to student-template.yaml
+
+# ArgoCD AppProject for student namespace isolation
+- apiVersion: argoproj.io/v1alpha1
+  kind: AppProject
+  metadata:
+    name: ${STUDENT_NAME}-project
+    namespace: argocd
+  spec:
+    description: "GitOps project for ${STUDENT_NAME}"
+    sourceRepos:
+    - '*'  # Allow all git repos - can be restricted to specific repos
+    destinations:
+    - namespace: ${STUDENT_NAME}
+      server: https://kubernetes.default.svc
+    clusterResourceWhitelist: []  # No cluster-wide resources
+    namespaceResourceWhitelist:
+    - group: ''
+      kind: '*'
+    - group: 'apps'
+      kind: '*'
+    - group: 'networking.k8s.io'
+      kind: '*'
+    - group: 'route.openshift.io'
+      kind: '*'
+    roles:
+    - name: ${STUDENT_NAME}-developer
+      description: "Developer role for ${STUDENT_NAME}"
+      policies:
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, get, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, create, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, update, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, delete, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, sync, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, applications, action/*, ${STUDENT_NAME}-project/*, allow
+      - p, proj:${STUDENT_NAME}-project:${STUDENT_NAME}-developer, repositories, get, *, allow
+      groups:
+      - ${STUDENT_NAME}-users
+
+# ArgoCD RBAC ConfigMap update (would need to be done once globally)
+# This would be added to the ArgoCD instance configuration

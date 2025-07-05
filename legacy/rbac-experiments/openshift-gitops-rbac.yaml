@@ -1,0 +1,44 @@
+# OpenShift GitOps RBAC for student template
+# Add these to student-template.yaml objects section
+
+# Allow OpenShift GitOps to manage student namespace
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: openshift-gitops-${STUDENT_NAME}-admin
+    namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+  subjects:
+  # OpenShift GitOps ArgoCD server service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-server
+    namespace: openshift-gitops
+  # OpenShift GitOps application controller service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
+  roleRef:
+    kind: ClusterRole
+    name: admin
+    apiGroup: rbac.authorization.k8s.io
+
+# Optional: Additional permissions for GitOps workflows
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: gitops-student-access-${STUDENT_NAME}
+    namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+  subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: ${STUDENT_NAME}
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: ${STUDENT_NAME}
+  roleRef:
+    kind: ClusterRole
+    name: edit
+    apiGroup: rbac.authorization.k8s.io

@@ -135,11 +135,11 @@ objects:
       - namespaceSelector:
           matchLabels:
             student: ${STUDENT_NAME}
-    # Allow ArgoCD access
+    # Allow OpenShift GitOps access (Day 3)
     - from:
       - namespaceSelector:
           matchLabels:
-            name: argocd
+            name: openshift-gitops
     egress:
     # Allow all egress (needed for git, registry, etc.)
     - {}
@@ -153,6 +153,9 @@ objects:
   metadata:
     name: devops-student-binding
     namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
   subjects:
   - kind: ServiceAccount
     name: default
@@ -165,7 +168,31 @@ objects:
     name: admin
     apiGroup: rbac.authorization.k8s.io
 
-# Pipeline ServiceAccount for Tekton
+# OpenShift GitOps RBAC (Day 3 - GitOps workflows)
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: openshift-gitops-${STUDENT_NAME}-admin
+    namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+      day: "day3-gitops"
+  subjects:
+  # OpenShift GitOps ArgoCD server service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-server
+    namespace: openshift-gitops
+  # OpenShift GitOps application controller service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
+  roleRef:
+    kind: ClusterRole
+    name: admin
+    apiGroup: rbac.authorization.k8s.io
+
+# Pipeline ServiceAccount for Tekton (ignore if exists)
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
@@ -174,6 +201,8 @@ objects:
     labels:
       app: tekton
       student: ${STUDENT_NAME}
+    annotations:
+      template.openshift.io/ignore-error: "true"
 
 # Enhanced code-server deployment
 - apiVersion: apps/v1
@@ -223,6 +252,11 @@ objects:
             value: "true"
           - name: PULUMI_SKIP_CONFIRMATIONS
             value: "true"
+          # ArgoCD environment variables for Day 3
+          - name: ARGOCD_SERVER
+            value: ${ARGOCD_SERVER_URL}
+          - name: ARGOCD_OPTS
+            value: "--insecure --grpc-web"
           resources:
             limits:
               memory: ${MEMORY_LIMIT}
@@ -294,7 +328,7 @@ parameters:
   value: 1Gi
 - name: STORAGE_CLASS
   description: Storage class for PVC (auto-detected if not specified)
-  value: ""
+  value: "gp3-csi"
 - name: MEMORY_LIMIT
   description: Memory limit per student
   value: 2Gi
@@ -313,3 +347,6 @@ parameters:
 - name: INSTRUCTOR_EMAIL
   description: Instructor contact email
   value: "instructor@workshop.example.com"
+- name: ARGOCD_SERVER_URL
+  description: ArgoCD server URL for Day 3 GitOps
+  value: "openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net"
