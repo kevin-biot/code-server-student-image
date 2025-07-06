@@ -55,26 +55,17 @@ RUN . /tmp/arch.env && \
     mv kubectl /usr/local/bin/ && \
     echo "kubectl installation completed"
 
-# oc - Install from OpenShift mirror with correct filename
+# oc - Install from OpenShift mirror with robust error handling
 RUN echo "Installing OpenShift CLI from OpenShift mirror..." && \
-    # Try stable version first
-    if curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" && \
-       file /tmp/oc.tar.gz | grep -q gzip; then \
-        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
-        chmod +x /usr/local/bin/oc && \
-        rm /tmp/oc.tar.gz && \
-        echo "oc installed from stable release"; \
-    # Fallback to latest version
-    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz" && \
-         file /tmp/oc.tar.gz | grep -q gzip; then \
-        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
-        chmod +x /usr/local/bin/oc && \
-        rm /tmp/oc.tar.gz && \
-        echo "oc installed from latest release"; \
-    else \
-        echo "All oc download methods failed, using kubectl fallback"; \
-        ln -s /usr/local/bin/kubectl /usr/local/bin/oc; \
-    fi
+    mkdir -p /tmp/oc-install && \
+    cd /tmp/oc-install && \
+    wget -O openshift-client-linux.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" && \
+    tar -xzf openshift-client-linux.tar.gz && \
+    cp oc /usr/local/bin/oc && \
+    chmod +x /usr/local/bin/oc && \
+    cd / && rm -rf /tmp/oc-install && \
+    echo "oc installed successfully" && \
+    oc version --client
 
 # Tekton CLI - IMPROVED with better error handling
 RUN ARCH=$(uname -m) && \
