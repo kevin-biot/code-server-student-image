@@ -55,34 +55,25 @@ RUN . /tmp/arch.env && \
     mv kubectl /usr/local/bin/ && \
     echo "kubectl installation completed"
 
-# oc - Try multiple sources with comprehensive fallbacks
-RUN . /tmp/arch.env && \
-    echo "Installing OpenShift CLI for ${ARCH}..." && \
-    # Method 1: Try stable release
-    if curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/${ARCH}/openshift-client-linux.tar.gz" && \
-       file /tmp/oc.tar.gz | grep -q gzip && \
-       tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
+# oc - Install from OpenShift mirror with correct filename
+RUN echo "Installing OpenShift CLI from OpenShift mirror..." && \
+    # Try stable version first
+    if curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" && \
+       file /tmp/oc.tar.gz | grep -q gzip; then \
         tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
+        chmod +x /usr/local/bin/oc && \
         rm /tmp/oc.tar.gz && \
         echo "oc installed from stable release"; \
-    # Method 2: Try latest release
-    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/${ARCH}/openshift-client-linux.tar.gz" && \
-         file /tmp/oc.tar.gz | grep -q gzip && \
-         tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
+    # Fallback to latest version
+    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz" && \
+         file /tmp/oc.tar.gz | grep -q gzip; then \
         tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
+        chmod +x /usr/local/bin/oc && \
         rm /tmp/oc.tar.gz && \
         echo "oc installed from latest release"; \
-    # Method 3: Try specific version
-    elif curl -fsSL -o /tmp/oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.15.0/${ARCH}/openshift-client-linux.tar.gz" && \
-         file /tmp/oc.tar.gz | grep -q gzip && \
-         tar -tzf /tmp/oc.tar.gz >/dev/null 2>&1; then \
-        tar -xzf /tmp/oc.tar.gz -C /usr/local/bin/ oc && \
-        rm /tmp/oc.tar.gz && \
-        echo "oc installed from version 4.15.0"; \
     else \
-        echo "All oc download methods failed, creating oc symlink to kubectl"; \
-        ln -s /usr/local/bin/kubectl /usr/local/bin/oc && \
-        rm -f /tmp/oc.tar.gz; \
+        echo "All oc download methods failed, using kubectl fallback"; \
+        ln -s /usr/local/bin/kubectl /usr/local/bin/oc; \
     fi
 
 # Tekton CLI - IMPROVED with better error handling
