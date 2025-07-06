@@ -31,10 +31,10 @@ for i in $(seq $START_NUM $END_NUM); do
     
     if [ ! -f "${HTPASSWD_FILE}" ]; then
         # Create file with first student
-        htpasswd -c -b -B "${HTPASSWD_FILE}" "${student_name}" "${SHARED_PASSWORD}"
+        htpasswd -Bc "${HTPASSWD_FILE}" "${student_name}" "${SHARED_PASSWORD}"
     else
         # Add additional students
-        htpasswd -b -B "${HTPASSWD_FILE}" "${student_name}" "${SHARED_PASSWORD}"
+        htpasswd -Bb "${HTPASSWD_FILE}" "${student_name}" "${SHARED_PASSWORD}"
     fi
 done
 

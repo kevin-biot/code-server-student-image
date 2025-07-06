@@ -330,17 +330,17 @@ parameters:
   description: Storage class for PVC (auto-detected if not specified)
   value: "gp3-csi"
 - name: MEMORY_LIMIT
-  description: Memory limit per student
-  value: 600Mi
+  description: Memory limit for code-server pod (needs more for Pulumi operations)
+  value: 1200Mi
 - name: MEMORY_REQUEST
   description: Memory request per student
-  value: 300Mi
+  value: 512Mi
 - name: CPU_LIMIT
-  description: CPU limit per student
-  value: 400m
+  description: CPU limit for code-server pod (needs more for Pulumi operations)
+  value: 800m
 - name: CPU_REQUEST
   description: CPU request per student
-  value: 200m
+  value: 300m
 - name: CLUSTER_DOMAIN
   description: OpenShift cluster domain
   required: true
