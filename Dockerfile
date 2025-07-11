@@ -121,6 +121,7 @@ COPY fix-gpgme-issue.sh /home/coder/fix-gpgme-issue.sh
 COPY run-pipeline.sh /home/coder/run-pipeline.sh
 COPY start-pipeline.sh /home/coder/start-pipeline.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
+COPY day2-tekton-README.md /home/coder/workspace/labs/day2-tekton/README.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
 # Set permissions correctly (OpenShift-compatible)
