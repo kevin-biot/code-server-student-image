@@ -123,37 +123,35 @@ COPY start-pipeline.sh /home/coder/start-pipeline.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
-# Create the workshop README directly in the image
-RUN cat > /home/coder/workspace/labs/day2-tekton/README.md << 'EOF'
-# Java Webapp DevOps Workshop
-
-## Overview
-
-This repository contains a complete DevOps workshop project featuring a simple Java servlet application with automated CI/CD pipelines. The project demonstrates modern container build and deployment practices using OpenShift Pipelines (Tekton), Shipwright Build, and Kubernetes manifests. It is designed for hands-on learning in DevOps workshops and educational environments.
-
-## Workshop Kickoff Steps
-
-Follow these exact steps in your code-server terminal for the workshop:
-
-```bash
-# 1. Navigate to your workshop directory
-cd ~/workspace/labs/day2-tekton
-
-# 2. Clone the workshop repository (development branch)
-git clone -b dev https://github.com/kevin-biot/devops-workshop.git
-
-# 3. Enter the project directory
-cd devops-workshop
-
-# 4. Make the setup script executable
-chmod +x ./setup-student-pipeline.sh
-
-# 5. Run the automated setup script
-./setup-student-pipeline.sh
-```
-
-For complete instructions, see the full README in the devops-workshop repository after cloning.
-EOF
+# Create the workshop README using simple echo commands
+RUN echo '# Java Webapp DevOps Workshop' > /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '## Overview' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'This repository contains a complete DevOps workshop project featuring a simple Java servlet application with automated CI/CD pipelines.' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '## Workshop Kickoff Steps' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'Follow these exact steps in your code-server terminal for the workshop:' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '```bash' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '# 1. Navigate to your workshop directory' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'cd ~/workspace/labs/day2-tekton' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '# 2. Clone the workshop repository (development branch)' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'git clone -b dev https://github.com/kevin-biot/devops-workshop.git' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '# 3. Enter the project directory' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'cd devops-workshop' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '# 4. Make the setup script executable' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'chmod +x ./setup-student-pipeline.sh' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '# 5. Run the automated setup script' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo './setup-student-pipeline.sh' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '```' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo '' >> /home/coder/workspace/labs/day2-tekton/README.md && \
+    echo 'For complete instructions, see the full README in the devops-workshop repository after cloning.' >> /home/coder/workspace/labs/day2-tekton/README.md
 
 # Set permissions correctly (OpenShift-compatible)
 RUN chmod +x /home/coder/startup.sh && \
