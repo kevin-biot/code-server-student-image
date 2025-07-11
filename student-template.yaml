@@ -318,8 +318,7 @@ parameters:
   required: true
 - name: STUDENT_PASSWORD
   description: Password for code-server access
-  generate: expression
-  from: '[a-zA-Z0-9]{12}'
+  value: "DevOps2025!"
 - name: IMAGE_NAME
   description: Code-server image name
   value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest

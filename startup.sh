@@ -472,10 +472,9 @@ contexts:
 EOF
 
 # Start code-server with proper configuration
-exec /usr/bin/entrypoint.sh \
+# Start code-server with current directory instead of container path
+exec code-server \
     --bind-addr 0.0.0.0:8080 \
-    --user-data-dir /home/coder/.local/share/code-server \
-    --extensions-dir /home/coder/.local/share/code-server/extensions \
     --disable-telemetry \
     --auth password \
-    /home/coder/workspace
+    .
