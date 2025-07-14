@@ -502,7 +502,7 @@ For complete instructions, see the full README in the devops-workshop repository
 EOF
 
 # Create workshop-specific README for day3-gitops
-cat > /home/coder/workspace/labs/day3-gitops/README.md << 'EOF'
+cat > /home/coder/workspace/labs/day3-gitops/ARGOCD-README.md << 'EOF'
 # Day 3 GitOps Lab - OpenShift Pipelines & ArgoCD
 
 ## 🎯 Lab Overview
