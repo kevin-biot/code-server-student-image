@@ -109,8 +109,8 @@ oc project $STUDENT_NAMESPACE
 ```bash
 cd labs/day1-pulumi
 
-# Clone workshop repository (this runs automatically)
-./clone-workshop-repos.sh
+# Clone the IaC workshop repository
+git clone https://github.com/kevin-biot/IaC
 
 # Navigate to the IaC project
 cd IaC
@@ -147,7 +147,9 @@ argocd app create my-app --repo <git-repo> --path manifests
 ### **Development Workflow (Simplified for Learning)**
 ```bash
 # Day 1: Focus on Infrastructure as Code
-cd labs/day1-pulumi/IaC
+cd labs/day1-pulumi
+git clone https://github.com/kevin-biot/IaC
+cd IaC
 pulumi preview  # See what will be created
 pulumi up       # Deploy infrastructure
 oc get all      # View deployed resources
@@ -240,11 +242,11 @@ Learn Infrastructure as Code concepts using Pulumi to deploy a complete web appl
 
 ### Step 1: Access Workshop Repository
 ```bash
-# The repository is automatically cloned for you
+# Navigate to the Day 1 directory
 cd ~/workspace/labs/day1-pulumi
 
-# Clone the IaC workshop content
-./clone-workshop-repos.sh
+# Clone the IaC workshop repository
+git clone https://github.com/kevin-biot/IaC
 
 # Navigate to the main project
 cd IaC
@@ -470,7 +472,7 @@ Follow these exact steps in your code-server terminal for the workshop:
 cd ~/workspace/labs/day2-tekton
 
 # 2. Clone the workshop repository (development branch)
-git clone -b dev https://github.com/kevin-biot/devops-workshop.git
+git clone -b dev https://github.com/kevin-biot/devops-workshop
 
 # 3. Enter the project directory
 cd devops-workshop
@@ -526,7 +528,10 @@ First, clone the lab repository and navigate to the lab directory:
 cd /home/coder/workspace/labs/day3-gitops
 
 # Clone the argocd repository
-git clone https://github.com/kevbrow/argocd.git .
+git clone https://github.com/kevin-biot/argocd
+
+# Enter the repository directory
+cd argocd
 
 # Verify you're in the correct directory with lab files
 ls -la
@@ -537,7 +542,7 @@ ls -la
 Configure your Git credentials for the pipeline:
 
 ```bash
-# Run the git credentials setup script (from the repo directory)
+# Run the git credentials setup script (from the argocd repo directory)
 ./setup-git-credentials.sh
 ```
 
@@ -550,7 +555,7 @@ This script will prompt you for:
 Configure your personalized pipeline environment:
 
 ```bash
-# Run the student pipeline setup (from the repo directory)
+# Run the student pipeline setup (from the argocd repo directory)
 ./setup-student-pipeline.sh
 ```
 
@@ -563,10 +568,10 @@ This script will:
 Execute the build process:
 
 ```bash
-# Create the BuildRun resource (from the repo directory)
+# Create the BuildRun resource (from the argocd repo directory)
 oc create -f buildrun-beta.yaml -n student01
 
-# Apply the pipeline run (from the repo directory)
+# Apply the pipeline run (from the argocd repo directory)
 oc apply -f pipeline-run.yaml -n student01
 ```
 
@@ -660,9 +665,9 @@ oc logs -f deployment/argocd-application-controller -n openshift-gitops
 ```
 
 ### Common Issues
-1. **Repository not cloned**: Ensure you're in `/home/coder/workspace/labs/day3-gitops` and have cloned the argocd repo
+1. **Repository not cloned**: Ensure you're in `/home/coder/workspace/labs/day3-gitops` and have cloned the argocd repo with `git clone https://github.com/kevin-biot/argocd`
 2. **Git credentials not configured**: Re-run `./setup-git-credentials.sh`
-3. **Scripts not executable**: Run `chmod +x *.sh` in the repo directory
+3. **Scripts not executable**: Run `chmod +x *.sh` in the argocd repo directory
 4. **Namespace permissions**: Ensure you're in the correct namespace
 5. **Image push failures**: Check registry credentials and permissions
 6. **ArgoCD sync issues**: Check Git repository accessibility
