@@ -439,6 +439,9 @@ fi
 # Set up Day 2 and Day 3 as before
 mkdir -p /home/coder/workspace/labs/day2-tekton /home/coder/workspace/labs/day3-gitops
 
+# Return to workspace root so code-server opens in the right directory
+cd /home/coder/workspace
+
 # Copy student quick start guide to workspace
 if [ -f /home/coder/STUDENT-QUICK-START.md ]; then
     cp /home/coder/STUDENT-QUICK-START.md /home/coder/workspace/STUDENT-QUICK-START.md
