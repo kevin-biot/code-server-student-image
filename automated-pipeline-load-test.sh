@@ -88,7 +88,7 @@ create_pipeline_run() {
     
     # Create pipeline run
     cat << EOF | oc apply -n "$namespace" -f - > "$LOG_DIR/${namespace}-wave${wave}.log" 2>&1
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: $run_name
@@ -96,6 +96,8 @@ metadata:
 spec:
   pipelineRef:
     name: java-webapp-pipeline
+    apiVersion: tekton.dev/v1
+    kind: Pipeline
   params:
     - name: git-url
       value: https://github.com/kevin-biot/devops-workshop.git
