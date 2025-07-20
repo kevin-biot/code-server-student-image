@@ -12,7 +12,7 @@ echo "Timestamp: $TIMESTAMP"
 
 # Create pipeline run from template with direct substitution
 cat << EOF | oc apply -f -
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   name: java-webapp-run-${TIMESTAMP}
@@ -20,6 +20,8 @@ metadata:
 spec:
   pipelineRef:
     name: java-webapp-pipeline
+    apiVersion: tekton.dev/v1
+    kind: Pipeline
   params:
     - name: git-url
       value: https://github.com/kevin-biot/devops-workshop.git
