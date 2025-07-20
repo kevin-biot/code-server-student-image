@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   generateName: java-webapp-run-
@@ -6,6 +6,8 @@ metadata:
 spec:
   pipelineRef:
     name: java-webapp-pipeline
+    apiVersion: tekton.dev/v1
+    kind: Pipeline
   params:
     - name: git-url
       value: https://github.com/kevin-biot/devops-workshop.git
