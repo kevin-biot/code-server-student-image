@@ -620,6 +620,26 @@ git branch --show-current
 ### 3. Follow Script Output Instructions
 The setup script will provide you with exact commands to copy/paste. Do not proceed with generic instructions until you've followed the script's specific output.
 
+## 🧹 If You Completed Day 2 Workshop
+
+**IMPORTANT**: If you did Day 2 (Tekton workshop) in the same namespace, you need to clean up first to avoid conflicts:
+
+```bash
+# Navigate to Day 2 repository
+cd /home/coder/workspace/labs/day2-tekton
+
+# Run cleanup script to remove Day 2 java-webapp
+./cleanup-for-day3.sh
+
+# Then navigate to Day 3 and proceed with setup
+cd /home/coder/workspace/labs/day3-gitops
+git clone -b student01 https://github.com/kevin-biot/argocd
+cd argocd
+./setup-student-pipeline.sh
+```
+
+**Why cleanup?** Both Day 2 and Day 3 deploy a `java-webapp` application. Day 2 uses direct deployment, Day 3 uses GitOps. Cleanup removes Day 2 resources so Day 3 GitOps can manage them properly.
+
 ## 🔄 Your GitOps Environment
 
 - **Your Branch**: student01 (matches your namespace)
