@@ -116,10 +116,10 @@ echo "   ✅ Project metadata configured"
 # Step 6: ArgoCD RBAC configuration for Day 3
 echo "🔐 Step 6: Configuring ArgoCD RBAC for student access..."
 
-# Call dedicated ArgoCD RBAC configuration script
+# Call updated ArgoCD RBAC configuration script
 ./configure-argocd-rbac.sh ${START_NUM} ${END_NUM}
 
-echo "   ✅ ArgoCD RBAC configured for student console access"
+echo "   ✅ ArgoCD RBAC configured: defaultPolicy=role:student (all students have access)"
 
 # Step 7: OAuth restart and validation
 echo "⏳ Step 7: Restarting OAuth services..."
