@@ -192,6 +192,26 @@ objects:
     name: admin
     apiGroup: rbac.authorization.k8s.io
 
+# ArgoCD RBAC for student console access (Day 3 GitOps)
+# This allows student to login to ArgoCD console with OpenShift credentials
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: argocd-console-${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+      day: "day3-gitops"
+      cleanup: "required"
+  subjects:
+  - kind: User
+    name: ${STUDENT_NAME}
+    apiGroup: rbac.authorization.k8s.io
+  roleRef:
+    kind: ClusterRole
+    name: view
+    apiGroup: rbac.authorization.k8s.io
+
 # Pipeline ServiceAccount for Tekton (ignore if exists)
 - apiVersion: v1
   kind: ServiceAccount

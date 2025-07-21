@@ -113,29 +113,13 @@ oc patch namespace devops --patch '{
 
 echo "   ✅ Project metadata configured"
 
-# Step 6: ArgoCD access for Day 3
-echo "🔄 Step 6: Configuring ArgoCD access for Day 3..."
+# Step 6: ArgoCD RBAC configuration for Day 3
+echo "🔐 Step 6: Configuring ArgoCD RBAC for student access..."
 
-cat << EOF | oc apply -f - > /dev/null
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: bootcamp-students-argocd-view
-  namespace: openshift-gitops
-subjects:
-$(for i in $(seq $START_NUM $END_NUM); do
-    student_name=$(printf "student%02d" $i)
-    echo "- kind: User"
-    echo "  name: ${student_name}"
-    echo "  apiGroup: rbac.authorization.k8s.io"
-done)
-roleRef:
-  kind: ClusterRole
-  name: view
-  apiGroup: rbac.authorization.k8s.io
-EOF
+# Call dedicated ArgoCD RBAC configuration script
+./configure-argocd-rbac.sh ${START_NUM} ${END_NUM}
 
-echo "   ✅ ArgoCD access configured"
+echo "   ✅ ArgoCD RBAC configured for student console access"
 
 # Step 7: OAuth restart and validation
 echo "⏳ Step 7: Restarting OAuth services..."
@@ -159,6 +143,12 @@ echo ""
 echo "🌐 OpenShift Console: https://console-openshift-console.${CLUSTER_DOMAIN}"
 echo "   Username: student01, student02, student03... student${END_NUM}"
 echo "   Password: ${SHARED_PASSWORD}"
+echo ""
+echo "🔄 ArgoCD Console: https://openshift-gitops-server-openshift-gitops.${CLUSTER_DOMAIN}"
+echo "   Login Method: Click 'LOG IN VIA OPENSHIFT'"
+echo "   Username: student01, student02, student03... student${END_NUM}"
+echo "   Password: ${SHARED_PASSWORD}"
+echo "   Access: Students see only their own java-webapp-studentXX applications"
 echo ""
 echo "💻 Code-Server URLs:"
 echo "   student01: https://student01-code-server.${CLUSTER_DOMAIN}"
