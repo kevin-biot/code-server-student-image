@@ -579,102 +579,43 @@ EOF
 
 # Create workshop-specific README for day3-gitops
 cat > /home/coder/workspace/labs/day3-gitops/README.md << 'EOF'
-# Day 3 GitOps Lab - OpenShift Pipelines & ArgoCD
+# Day 3: GitOps with ArgoCD Workshop
 
-## 🚨 CRITICAL: Clone YOUR Student Branch
+## 🚀 Quick Start
 
-**IMPORTANT**: You must clone YOUR specific student branch, not the main branch!
-
+### Step 1: Clone the workshop repository
 ```bash
-# Navigate to the lab directory
-cd /home/coder/workspace/labs/day3-gitops
-
-# ❌ WRONG: git clone https://github.com/kevin-biot/argocd
-# ✅ CORRECT: Clone YOUR specific branch
-git clone -b student01 https://github.com/kevin-biot/argocd
+cd ~/workspace/labs/day3-gitops
+git clone https://github.com/kevin-biot/argocd.git
 cd argocd
-
-# 🔍 VALIDATE: Confirm you're on your student branch
-git branch --show-current
-# Should output: student01
 ```
 
-## 📋 Quick Setup Steps
-
-### 1. Setup Git Credentials
+### Step 2: Switch to your branch
 ```bash
-./setup-git-credentials.sh
+git checkout student01  # Replace with your assigned student number
 ```
 
-### 2. Run Student Pipeline Setup
+### Step 3: 📖 Continue with the exercise instructions
 ```bash
-./setup-student-pipeline.sh
+cat DAY3-GITOPS-README.md
+# OR open DAY3-GITOPS-README.md in the file explorer
 ```
 
-**📝 IMPORTANT**: After running the script above:
-- **Read the script output completely**
-- **Look for any error messages**
-- **Follow the specific next steps it provides**
-- **Copy/paste commands from the script output**
+## 🔧 Your Environment
+- **Namespace:** `student01` (replace with your number)
+- **Username:** `student01` 
+- **Password:** `DevOps2025!`
+- **Git configured:** ✅ Ready for push operations
 
-### 3. Follow Script Output Instructions
-The setup script will provide you with exact commands to copy/paste. Do not proceed with generic instructions until you've followed the script's specific output.
-
-## 🧹 If You Completed Day 2 Workshop
-
-**IMPORTANT**: If you did Day 2 (Tekton workshop) in the same namespace, you need to clean up first to avoid conflicts:
-
-```bash
-# Navigate to Day 2 repository
-cd /home/coder/workspace/labs/day2-tekton
-
-# Run cleanup script to remove Day 2 java-webapp
-./cleanup-for-day3.sh
-
-# Then navigate to Day 3 and proceed with setup
-cd /home/coder/workspace/labs/day3-gitops
-git clone -b student01 https://github.com/kevin-biot/argocd
-cd argocd
-./setup-student-pipeline.sh
+## 📁 Workshop Structure
+```
+~/workspace/labs/
+├── day2-tekton/     # Previous day's work
+└── day3-gitops/
+    └── argocd/      # ← You are here after git clone
 ```
 
-**Why cleanup?** Both Day 2 and Day 3 deploy a `java-webapp` application. Day 2 uses direct deployment, Day 3 uses GitOps. Cleanup removes Day 2 resources so Day 3 GitOps can manage them properly.
-
-## 🔄 Your GitOps Environment
-
-- **Your Branch**: student01 (matches your namespace)
-- **ArgoCD Watches**: student01 branch for changes
-- **Pipeline Commits To**: student01 branch
-- **Deploys To**: student01 namespace
-
-## ❌ Common Branch Mistakes
-
-```bash
-# ❌ WRONG - These break your workflow:
-git clone https://github.com/kevin-biot/argocd  # Gets main branch!
-git push origin main                            # Pushes to wrong branch!
-
-# ✅ CORRECT - These work with GitOps:
-git clone -b student01 https://github.com/kevin-biot/argocd  # Gets YOUR branch
-git push origin student01                                    # Pushes to YOUR branch
-```
-
-## 🚑 Quick Troubleshooting
-
-**Wrong branch?**
-```bash
-cd /home/coder/workspace/labs/day3-gitops
-rm -rf argocd
-git clone -b student01 https://github.com/kevin-biot/argocd
-```
-
-**Setup failed?**
-- Check script output for errors
-- Ensure you're on student01 branch
-- Re-run `./setup-student-pipeline.sh`
-
----
-**💡 Remember**: The setup script provides your next steps - always read its output!
+⚠️ **Important:** All detailed instructions are in the cloned repository's `DAY3-GITOPS-README.md` file.
 EOF
 
 # Create oc config to set default project context
