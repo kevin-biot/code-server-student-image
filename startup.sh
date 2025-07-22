@@ -583,16 +583,15 @@ cat > /home/coder/workspace/labs/day3-gitops/README.md << 'EOF'
 
 ## 🚀 Quick Start
 
-### Step 1: Clone the workshop repository
+### Step 1: Clone YOUR student branch
 ```bash
 cd ~/workspace/labs/day3-gitops
-git clone https://github.com/kevin-biot/argocd.git
+git clone -b student01 https://github.com/kevin-biot/argocd
 cd argocd
-```
 
-### Step 2: Switch to your branch
-```bash
-git checkout student01  # Replace with your assigned student number
+# 🔍 VALIDATE: Confirm you're on your student branch
+git branch --show-current
+# Should output: student01
 ```
 
 ### Step 3: 📖 Continue with the exercise instructions
