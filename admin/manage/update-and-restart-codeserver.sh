@@ -11,10 +11,11 @@ echo "🔧 Code-Server Image Update and Restart Script"
 echo "This will rebuild the code-server image with the new README and restart existing deployments"
 echo
 
-# Check if we're in the right directory
-if [[ ! -f "Dockerfile" ]] || [[ ! -f "day2-tekton-README.md" ]]; then
-    echo "❌ Error: Please run this script from the code-server-student-image directory"
-    echo "   Expected files: Dockerfile, day2-tekton-README.md"
+# Check if required files exist (relative to repository root)
+if [[ ! -f "../../Dockerfile" ]] || [[ ! -f "../../day2-tekton-README.md" ]]; then
+    echo "❌ Error: Required files not found"
+    echo "   Expected files: ../../Dockerfile, ../../day2-tekton-README.md"
+    echo "   Run this script from admin/manage/ or ensure repository structure is correct"
     exit 1
 fi
 
@@ -41,6 +42,11 @@ read -rp "❓ Proceed with image rebuild and deployment restart? (y/n): " CONFIR
 echo
 echo "🏗️  Step 1: Building new code-server image..."
 echo "⏱️  This may take several minutes..."
+
+# Change to repository root for building
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$REPO_ROOT"
+echo "Building from: $(pwd)"
 
 # Build the image
 if command -v podman &> /dev/null; then

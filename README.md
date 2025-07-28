@@ -29,23 +29,25 @@ environment variable before running the script.
 
 ### 2. Deploy Students
 
-Use the management script to deploy multiple student environments:
+Use the admin deployment script for complete student environment setup:
 
 ```bash
-# Make the script executable
-chmod +x deploy-students.sh
+# Deploy complete student environment (recommended)
+./admin/deploy/complete-student-setup-simple.sh 1 25
 
-# Deploy 5 students (student01-student05)
-./deploy-students.sh -n 5 -d apps.your-cluster.com
+# This creates:
+# - Student namespaces with code-server deployments
+# - OpenShift user accounts with shared password
+# - ArgoCD RBAC configuration for GitOps access
+# - OAuth authentication setup
+# - Production-ready security and resource limits
 
-# Force redeploy if namespaces already exist
-./deploy-students.sh -n 5 -d apps.your-cluster.com --force
+# For smaller test deployments
+./admin/deploy/complete-student-setup-simple.sh 1 5
 
-# Deploy specific students
-./deploy-students.sh -s alice,bob,charlie -d apps.your-cluster.com
-
-# Clean up environments
-./deploy-students.sh -n 5 --cleanup
+# Individual deployment components (advanced)
+./admin/deploy/deploy-bulk-students.sh 1 25      # Just deploy environments
+./admin/deploy/configure-argocd-rbac.sh 1 25     # Just configure ArgoCD
 ```
 
 If a student's namespace already exists, the script logs a warning and skips deployment. Use `--force` to redeploy.
@@ -83,6 +85,25 @@ Each student gets their own namespace with:
 - **ResourceQuota**: CPU/memory limits
 - **NetworkPolicy**: Isolation from other students
 - **RBAC**: Limited permissions within their namespace
+
+## Admin Workflow Structure
+
+The repository is organized for efficient admin operations:
+
+```
+admin/
+├── deploy/     # Deployment scripts
+│   ├── complete-student-setup-simple.sh    # ← MAIN DEPLOYMENT SCRIPT
+│   ├── deploy-bulk-students.sh             # Individual environment deployment
+│   └── configure-argocd-rbac.sh            # ArgoCD access configuration
+├── manage/     # Operations and management
+│   ├── monitor-students.sh                 # Environment monitoring
+│   ├── teardown-students.sh                # Environment cleanup
+│   └── batch-pod-delete.sh                 # Bulk operations
+└── validate/   # Testing and validation
+    ├── end-to-end-test.sh                  # Complete deployment testing
+    └── comprehensive-validation.sh         # Environment validation
+```
 
 ## Configuration
 
@@ -125,14 +146,14 @@ Each student gets their own namespace with:
 Check student environment status:
 
 ```bash
-# List all student namespaces
-oc get namespaces -l student
+# Use admin monitoring tools
+./admin/manage/monitor-students.sh
 
-# Check resource usage
-oc get resourcequota -A | grep student
-
-# Monitor deployments
-oc get deployments -A | grep code-server
+# Manual monitoring commands
+oc get namespaces -l student                    # List student namespaces
+oc get resourcequota -A | grep student          # Check resource usage
+oc get deployments -A | grep code-server        # Monitor deployments
+oc get pods -A | grep code-server               # Check pod status
 ```
 
 ## Troubleshooting
@@ -159,7 +180,11 @@ oc get deployments -A | grep code-server
 
 Remove all student environments:
 ```bash
-./deploy-students.sh -n 50 --cleanup  # Adjust number as needed
+# Use admin teardown tools
+./admin/manage/teardown-students.sh 1 25        # Remove specific range
+
+# Manual cleanup (if needed) 
+oc get namespaces -l student --no-headers -o custom-columns=":metadata.name" | xargs -I {} oc delete namespace {}
 ```
 
 ## Contributing

@@ -1,0 +1,376 @@
+# Enhanced student-template.yaml with comprehensive DevOps tooling
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: devops-workshop-student
+  namespace: devops
+  annotations:
+    description: "Complete DevOps workshop environment with Pulumi IaC, Tekton CI/CD, and GitOps"
+    tags: "workshop,devops,pulumi,tekton,argocd,java,nodejs,python"
+    iconClass: "icon-nodejs"
+
+objects:
+# Enhanced Namespace with labels
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+      environment: "training"
+    annotations:
+      workshop.instructor/contact: "${INSTRUCTOR_EMAIL}"
+      workshop.student/level: "beginner"
+
+# Enhanced PVC for comprehensive workspace
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: code-server-pvc
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: code-server
+      student: ${STUDENT_NAME}
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE_SIZE}
+    storageClassName: ${STORAGE_CLASS}
+
+# PVC used by Tekton pipelines
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: shared-pvc
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: tekton
+      student: ${STUDENT_NAME}
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${STORAGE_SIZE}
+    storageClassName: ${STORAGE_CLASS}
+
+# Enhanced ResourceQuota for DevOps workloads
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    name: student-quota
+    namespace: ${STUDENT_NAME}
+  spec:
+    hard:
+      # Compute Resources (increased for CI/CD workloads)
+      requests.cpu: "2"
+      requests.memory: 4Gi
+      limits.cpu: "4"
+      limits.memory: 8Gi
+      
+      # Storage Resources
+      persistentvolumeclaims: "5"
+      requests.storage: 20Gi
+      
+      # Object Counts (increased for DevOps resources)
+      pods: "15"
+      services: "10"
+      secrets: "20"
+      configmaps: "20"
+
+# Enhanced LimitRange for better resource management
+- apiVersion: v1
+  kind: LimitRange
+  metadata:
+    name: student-limits
+    namespace: ${STUDENT_NAME}
+  spec:
+    limits:
+    - default:
+        cpu: 500m
+        memory: 1Gi
+      defaultRequest:
+        cpu: 100m
+        memory: 256Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      type: Container
+    - max:
+        storage: 10Gi
+      min:
+        storage: 1Gi
+      type: PersistentVolumeClaim
+
+# Enhanced NetworkPolicy for workshop security
+- apiVersion: networking.k8s.io/v1
+  kind: NetworkPolicy
+  metadata:
+    name: student-network-policy
+    namespace: ${STUDENT_NAME}
+  spec:
+    podSelector: {}
+    policyTypes:
+    - Ingress
+    - Egress
+    ingress:
+    # Allow OpenShift ingress
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: openshift-ingress
+    # Allow monitoring
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: openshift-monitoring
+    # Allow same namespace communication
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            student: ${STUDENT_NAME}
+    # Allow OpenShift GitOps access (Day 3)
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: openshift-gitops
+    egress:
+    # Allow all egress (needed for git, registry, etc.)
+    - {}
+
+# Enhanced RBAC for DevOps operations - Grant admin access to namespace
+# Note: Students need admin access to create roles/rolebindings for pipeline setup
+
+# Enhanced RoleBinding - Grant admin access for pipeline setup
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: devops-student-binding
+    namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+  subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: ${STUDENT_NAME}
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: ${STUDENT_NAME}
+  roleRef:
+    kind: ClusterRole
+    name: admin
+    apiGroup: rbac.authorization.k8s.io
+
+# OpenShift GitOps RBAC (Day 3 - GitOps workflows)
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: openshift-gitops-${STUDENT_NAME}-admin
+    namespace: ${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+      day: "day3-gitops"
+  subjects:
+  # OpenShift GitOps ArgoCD server service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-server
+    namespace: openshift-gitops
+  # OpenShift GitOps application controller service account
+  - kind: ServiceAccount
+    name: openshift-gitops-argocd-application-controller
+    namespace: openshift-gitops
+  roleRef:
+    kind: ClusterRole
+    name: admin
+    apiGroup: rbac.authorization.k8s.io
+
+# NOTE: ArgoCD console RBAC is configured via ArgoCD Custom Resource
+# in openshift-gitops namespace, not via individual student resources.
+# Use configure-argocd-rbac.sh script to set up student console access.
+
+# Pipeline ServiceAccount for Tekton (ignore if exists)
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: pipeline
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: tekton
+      student: ${STUDENT_NAME}
+    annotations:
+      template.openshift.io/ignore-error: "true"
+
+# SCC ClusterRoleBinding for privileged containers (BuildRun needs this)
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: scc-privileged-${STUDENT_NAME}
+    labels:
+      student: ${STUDENT_NAME}
+      workshop: "devops"
+      cleanup: "required"
+  subjects:
+  - kind: ServiceAccount
+    name: pipeline
+    namespace: ${STUDENT_NAME}
+  - kind: ServiceAccount
+    name: default
+    namespace: ${STUDENT_NAME}
+  roleRef:
+    kind: ClusterRole
+    name: system:openshift:scc:privileged
+    apiGroup: rbac.authorization.k8s.io
+
+# Enhanced code-server deployment
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+    labels:
+      app: code-server
+      student: ${STUDENT_NAME}
+      component: development-environment
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: code-server
+    template:
+      metadata:
+        labels:
+          app: code-server
+          student: ${STUDENT_NAME}
+        annotations:
+          workshop.devops/tools: "pulumi,tekton,argocd,java,nodejs,python"
+      spec:
+        securityContext:
+          runAsNonRoot: true
+        containers:
+        - name: code-server
+          image: ${IMAGE_NAME}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - "ALL"
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+          - name: PASSWORD
+            value: ${STUDENT_PASSWORD}
+          - name: STUDENT_NAMESPACE
+            value: ${STUDENT_NAME}
+          - name: PULUMI_SKIP_UPDATE_CHECK
+            value: "true"
+          - name: PULUMI_SKIP_CONFIRMATIONS
+            value: "true"
+          # ArgoCD environment variables for Day 3
+          - name: ARGOCD_SERVER
+            value: ${ARGOCD_SERVER_URL}
+          - name: ARGOCD_OPTS
+            value: "--insecure --grpc-web"
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
+            requests:
+              memory: ${MEMORY_REQUEST}
+              cpu: ${CPU_REQUEST}
+          volumeMounts:
+          - name: data
+            mountPath: /home/coder/workspace
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+        volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: code-server-pvc
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+  spec:
+    selector:
+      app: code-server
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 8080
+
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: code-server
+    namespace: ${STUDENT_NAME}
+  spec:
+    host: ${STUDENT_NAME}-code-server.${CLUSTER_DOMAIN}
+    to:
+      kind: Service
+      name: code-server
+    port:
+      targetPort: 8080
+    tls:
+      termination: edge
+
+parameters:
+- name: STUDENT_NAME
+  description: Student identifier (e.g., student01, student02)
+  required: true
+- name: STUDENT_PASSWORD
+  description: Password for code-server access
+  value: "DevOps2025!"
+- name: IMAGE_NAME
+  description: Code-server image name
+  value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
+- name: STORAGE_SIZE
+  description: PVC storage size
+  value: 1Gi
+- name: STORAGE_CLASS
+  description: Storage class for PVC (auto-detected if not specified)
+  value: "gp3-csi"
+- name: MEMORY_LIMIT
+  description: Memory limit for code-server pod (needs more for Pulumi operations)
+  value: 1200Mi
+- name: MEMORY_REQUEST
+  description: Memory request per student
+  value: 512Mi
+- name: CPU_LIMIT
+  description: CPU limit for code-server pod (needs more for Pulumi operations)
+  value: 800m
+- name: CPU_REQUEST
+  description: CPU request per student
+  value: 300m
+- name: CLUSTER_DOMAIN
+  description: OpenShift cluster domain
+  required: true
+- name: INSTRUCTOR_EMAIL
+  description: Instructor contact email
+  value: "instructor@workshop.example.com"
+- name: ARGOCD_SERVER_URL
+  description: ArgoCD server URL for Day 3 GitOps
+  value: "openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net"

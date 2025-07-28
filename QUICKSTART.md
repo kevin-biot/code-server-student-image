@@ -25,7 +25,7 @@ cd code-server-student-image
 ### Step 2: Deploy Complete Student Environment
 ```bash
 # Deploy 25 students with all RBAC and authentication
-./complete-student-setup-simple.sh 1 25
+./admin/deploy/complete-student-setup-simple.sh 1 25
 
 # This creates:
 # - 25 student namespaces with code-server pods

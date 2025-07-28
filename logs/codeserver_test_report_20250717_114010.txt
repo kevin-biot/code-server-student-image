@@ -1,0 +1,13 @@
+Code Server Environment Validation Report
+Generated: Thu Jul 17 11:40:10 CEST 2025
+Expected Students: 1
+Actual Students: 1
+Test Results Summary:
+- Total Tests: 13
+- Passed: 12
+- Failed: 0
+- Warnings: 2
+
+Success Rate: 92%
+
+Detailed logs available in: codeserver_validation_20250717_113958.log
