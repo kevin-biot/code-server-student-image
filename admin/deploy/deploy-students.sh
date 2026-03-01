@@ -262,7 +262,7 @@ IMAGE_NAME=""
 CLEANUP=false
 FORCE=false
 CREATE_CONSOLE_USERS=false
-CONSOLE_PASSWORD="workshop123"
+CONSOLE_PASSWORD="${CONSOLE_PASSWORD:?ERROR: CONSOLE_PASSWORD must be set}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in

@@ -6,7 +6,7 @@ This directory contains templates and scripts for configuring ArgoCD to allow st
 
 Allow students to:
 - Login to ArgoCD console using OpenShift SSO (student01, student02, etc.)
-- Use their workshop password: `DevOps2025!`
+- Use their workshop password: `<workshop-password>`
 - See only their own `java-webapp-studentXX` application
 - Cannot see other students' applications
 
@@ -53,7 +53,7 @@ Allow students to:
 3. **Test student access**:
    - Open ArgoCD console: https://openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net
    - Click "LOG IN VIA OPENSHIFT"
-   - Login as: student01 / DevOps2025!
+   - Login as: student01 / <workshop-password>
    - Verify only java-webapp-student01 is visible
 
 ## 🔧 Configuration Details
@@ -138,7 +138,7 @@ This ensures student applications are visible to the correct users.
 ## 🎯 Success Criteria
 
 After RBAC setup, students should be able to:
-- ✅ Login to ArgoCD with student01/DevOps2025!
+- ✅ Login to ArgoCD with student01/<workshop-password>
 - ✅ See their java-webapp-studentXX application
 - ✅ View application sync status and health
 - ✅ NOT see other students' applications

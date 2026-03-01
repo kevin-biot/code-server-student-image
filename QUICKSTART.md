@@ -41,7 +41,7 @@ cd code-server-student-image
 ### OpenShift Console Access
 - **URL**: `https://console-openshift-console.apps.YOUR-CLUSTER.com`
 - **Username**: `student01`, `student02`, ... `student25`
-- **Password**: `DevOps2025!`
+- **Password**: `<your-workshop-password>`
 - **Purpose**: Watch pipelines, ArgoCD applications, monitor deployments
 
 ### Code-Server Development Environment
@@ -69,7 +69,7 @@ Each student environment includes:
 oc get pods --all-namespaces | grep code-server | grep Running
 
 # Test student authentication
-oc login -u student01 -p 'DevOps2025!'
+oc login -u student01 -p '<your-workshop-password>'
 oc get pods -n student01
 
 # Verify student cannot access other namespaces

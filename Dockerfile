@@ -1,5 +1,6 @@
 # Multi-architecture Dockerfile - supports both ARM64 and AMD64
-FROM ghcr.io/coder/code-server:latest
+ARG CODE_SERVER_VERSION=4.109.2
+FROM ghcr.io/coder/code-server:${CODE_SERVER_VERSION}
 
 # Auto-detect architecture
 RUN ARCH=$(uname -m) && \
@@ -10,8 +11,8 @@ RUN ARCH=$(uname -m) && \
     echo "Detected architecture: ${ARCH}" && \
     echo "ARCH=${ARCH}" > /tmp/arch.env
 
-ENV TOOL_ARCH=auto
-ARG TKN_VERSION=0.41.0
+ARG TKN_VERSION=0.42.0
+ARG ARGOCD_VERSION=2.13.3
 ENV HOME=/home/coder
 ENV XDG_CONFIG_HOME=/home/coder/.config
 ENV XDG_DATA_HOME=/home/coder/.local/share
@@ -19,7 +20,7 @@ ENV SHELL=/bin/bash
 ENV STUDENT_NAMESPACE=""
 ENV PULUMI_SKIP_UPDATE_CHECK=true
 ENV PULUMI_SKIP_CONFIRMATIONS=true
-ENV PULUMI_CONFIG_PASSPHRASE="workshop123"
+# PULUMI_CONFIG_PASSPHRASE injected at runtime via deployment template
 
 USER root
 
@@ -94,7 +95,7 @@ RUN curl -fsSL https://get.pulumi.com | sh \
 # ArgoCD CLI - auto-detect architecture with improved error handling
 RUN . /tmp/arch.env && \
     echo "Installing ArgoCD CLI for ${ARCH}..." && \
-    curl -fsSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.10.0/argocd-linux-${ARCH} && \
+    curl -fsSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/argocd-linux-${ARCH} && \
     chmod +x /usr/local/bin/argocd && \
     echo "ArgoCD CLI installation completed"
 
@@ -117,17 +118,11 @@ RUN mkdir -p /home/coder/workspace/projects \
 # Copy templates and config - ensure ownership
 COPY gitconfig-template /home/coder/.gitconfig-template
 COPY startup.sh /home/coder/startup.sh
-COPY fix-gpgme-issue.sh /home/coder/fix-gpgme-issue.sh
-COPY run-pipeline.sh /home/coder/run-pipeline.sh
-COPY start-pipeline.sh /home/coder/start-pipeline.sh
 COPY STUDENT-QUICK-START.md /home/coder/STUDENT-QUICK-START.md
 COPY workshop-templates/ /home/coder/workspace/templates/
 
 # Set permissions correctly (OpenShift-compatible)
 RUN chmod +x /home/coder/startup.sh && \
-    chmod +x /home/coder/fix-gpgme-issue.sh && \
-    chmod +x /home/coder/run-pipeline.sh && \
-    chmod +x /home/coder/start-pipeline.sh && \
     chgrp -R 0 /home/coder && \
     chmod -R g=u /home/coder
 

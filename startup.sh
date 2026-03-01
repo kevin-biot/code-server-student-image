@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Enhanced startup.sh - Complete DevOps workshop environment setup
 
 # Detect student namespace from environment or derive from hostname
@@ -11,7 +12,7 @@ fi
 export STUDENT_NAMESPACE
 
 # Set up Pulumi environment to avoid passphrase prompts
-export PULUMI_CONFIG_PASSPHRASE="workshop123"
+export PULUMI_CONFIG_PASSPHRASE="${PULUMI_CONFIG_PASSPHRASE:-}"
 export PULUMI_SKIP_UPDATE_CHECK=true
 export PULUMI_SKIP_CONFIRMATIONS=true
 
@@ -180,7 +181,7 @@ When your applications are deployed, you can access:
 3. **Git Integration**: Built-in Git support with visual diff
 4. **Extensions**: Pre-installed extensions for YAML, Java, TypeScript
 5. **Auto-completion**: Tab completion enabled for all CLI tools
-6. **No Passphrases**: Pulumi passphrase pre-configured as `workshop123`
+6. **No Passphrases**: Pulumi passphrase pre-configured via environment variable
 7. **Fast Deployment**: Day 1 uses pre-built images for reliable workshop experience
 
 ## 📋 Day 1 Learning Objectives
@@ -531,7 +532,7 @@ fi
 echo "export STUDENT_NAMESPACE=$STUDENT_NAMESPACE" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_UPDATE_CHECK=true" >> /home/coder/.bashrc
 echo "export PULUMI_SKIP_CONFIRMATIONS=true" >> /home/coder/.bashrc
-echo "export PULUMI_CONFIG_PASSPHRASE=\"workshop123\"" >> /home/coder/.bashrc
+echo "export PULUMI_CONFIG_PASSPHRASE=\"${PULUMI_CONFIG_PASSPHRASE}\"" >> /home/coder/.bashrc
 
 # Create workshop-specific README for day2-tekton
 cat > /home/coder/workspace/labs/day2-tekton/README.md << 'EOF'
@@ -603,7 +604,7 @@ cat DAY3-GITOPS-README.md
 ## 🔧 Your Environment
 - **Namespace:** `student01` (replace with your number)
 - **Username:** `student01` 
-- **Password:** `DevOps2025!`
+- **Password:** (provided by instructor)
 - **Git configured:** ✅ Ready for push operations
 
 ## 📁 Workshop Structure

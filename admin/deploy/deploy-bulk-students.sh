@@ -1,9 +1,9 @@
 #!/bin/bash
 # deploy-bulk-students.sh - Deploy multiple students for capacity testing
 
-# set -e  # Disabled to handle AlreadyExists errors gracefully
+set -e
 
-CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-apps.bootcamp-ocs-cluster.bootcamp.tkmind.net}"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:?ERROR: CLUSTER_DOMAIN must be set}"
 START_NUM="${1:-1}"
 END_NUM="${2:-25}"
 BATCH_SIZE="${3:-5}"  # Deploy 5 at a time to avoid overwhelming cluster
@@ -18,11 +18,14 @@ deploy_student() {
     local student_name=$(printf "student%02d" $student_num)
     
     echo "📦 Deploying ${student_name}..."
-    oc process -f ../student-template.yaml \
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    oc process -f "${SCRIPT_DIR}/../student-template.yaml" \
         -p STUDENT_NAME="${student_name}" \
+        -p STUDENT_PASSWORD="${STUDENT_PASSWORD:-${SHARED_PASSWORD}}" \
         -p CLUSTER_DOMAIN="${CLUSTER_DOMAIN}" \
+        -p ARGOCD_SERVER_URL="${ARGOCD_SERVER_URL:-openshift-gitops-server-openshift-gitops.${CLUSTER_DOMAIN}}" \
         -p STORAGE_CLASS="gp3-csi" \
-        | oc apply -f - > /dev/null
+        | oc apply -f - > /dev/null 2>&1 || echo "   (some resources may already exist)"
     
     echo "✅ ${student_name} submitted"
 }

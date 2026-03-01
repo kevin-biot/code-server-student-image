@@ -101,7 +101,7 @@ p, role:student, clusters, get, *, allow
 1. **Clone correct branch**: `git clone -b student01 https://github.com/kevin-biot/argocd`
 2. **Run setup script**: `./setup-student-pipeline.sh`
 3. **Git push happens**: Rendered manifests pushed to git automatically
-4. **ArgoCD console access**: Login with student01/DevOps2025!
+4. **ArgoCD console access**: Login with student01/<workshop-password>
 5. **See their application**: `java-webapp-student01` with sync permissions
 
 ## 🎯 **Key Takeaways**

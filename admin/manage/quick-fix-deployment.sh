@@ -3,10 +3,10 @@
 
 set -e
 
-CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-apps.bootcamp-ocs-cluster.bootcamp.tkmind.net}"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:?ERROR: CLUSTER_DOMAIN must be set}"
 START_NUM="${1:-1}"
 END_NUM="${2:-5}"
-SHARED_PASSWORD="DevOps2025!"
+SHARED_PASSWORD="${SHARED_PASSWORD:?ERROR: SHARED_PASSWORD must be set}"
 
 echo "🔧 Quick Fix: Creating Basic Student Setup"
 echo "=========================================="
@@ -152,12 +152,12 @@ if [ "$auth_success_count" -eq "$auth_total_count" ]; then
     echo "✅ ALL AUTHENTICATION TESTS PASSED!"
     echo ""
     echo "🎓 Ready for testing:"
-    echo "   oc login -u student01 -p 'DevOps2025!'"
+    echo "   oc login -u student01 -p '\${SHARED_PASSWORD}'"
     echo "   oc get pods -n student01"
     echo "   oc get pods -n student02  # Should work (view)"
     echo ""
     echo "🌐 Console: https://console-openshift-console.${CLUSTER_DOMAIN}"
-    echo "   Login: student01-student$(printf "%02d" $END_NUM) / DevOps2025!"
+    echo "   Login: student01-student$(printf "%02d" $END_NUM) / \${SHARED_PASSWORD}"
 else
     echo "⚠️  Some authentication issues remain"
     echo "   Successful: ${auth_success_count}/${auth_total_count}"

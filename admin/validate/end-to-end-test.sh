@@ -7,10 +7,10 @@ chmod +x "$0"
 set -e
 
 # Configuration
-CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-apps.bootcamp-ocs-cluster.bootcamp.tkmind.net}"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:?ERROR: CLUSTER_DOMAIN must be set}"
 TEST_START_NUM="${1:-1}"
 TEST_END_NUM="${2:-3}"
-SHARED_PASSWORD="DevOps2025!"
+SHARED_PASSWORD="${SHARED_PASSWORD:?ERROR: SHARED_PASSWORD must be set}"
 
 echo "🧪 End-to-End Test: Complete Student Environment Setup"
 echo "======================================================"

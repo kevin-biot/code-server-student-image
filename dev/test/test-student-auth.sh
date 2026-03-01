@@ -3,8 +3,8 @@
 
 set -e
 
-CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-apps.bootcamp-ocs-cluster.bootcamp.tkmind.net}"
-SHARED_PASSWORD="DevOps2025!"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:?ERROR: CLUSTER_DOMAIN must be set}"
+SHARED_PASSWORD="${SHARED_PASSWORD:?ERROR: SHARED_PASSWORD must be set}"
 
 echo "🧪 Testing Student Authentication"
 echo "================================"

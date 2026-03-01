@@ -34,7 +34,7 @@ XDG_DATA_HOME=/home/coder/.local/share
 STUDENT_NAMESPACE=""                    # Set at runtime
 PULUMI_SKIP_UPDATE_CHECK=true
 PULUMI_SKIP_CONFIRMATIONS=true
-PULUMI_CONFIG_PASSPHRASE="workshop123"  # Pre-configured for workshops
+PULUMI_CONFIG_PASSPHRASE=""             # Injected at runtime via deployment template
 ```
 
 ## Installed Software Stack

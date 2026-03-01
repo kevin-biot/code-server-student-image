@@ -3,10 +3,10 @@
 
 set -e
 
-CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-apps.bootcamp-ocs-cluster.bootcamp.tkmind.net}"
+CLUSTER_DOMAIN="${CLUSTER_DOMAIN:?ERROR: CLUSTER_DOMAIN must be set. Export it before running this script.}"
 START_NUM="${1:-1}"
 END_NUM="${2:-25}"
-SHARED_PASSWORD="DevOps2025!"
+SHARED_PASSWORD="${SHARED_PASSWORD:?ERROR: SHARED_PASSWORD must be set. Export it before running this script.}"
 
 echo "🚀 Complete Student Environment Setup (Streamlined)"
 echo "=================================================="

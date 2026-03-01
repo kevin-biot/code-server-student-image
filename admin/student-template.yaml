@@ -208,11 +208,13 @@ objects:
     annotations:
       template.openshift.io/ignore-error: "true"
 
-# SCC ClusterRoleBinding for privileged containers (BuildRun needs this)
+# SCC ClusterRoleBinding for build containers
+# Using anyuid instead of privileged - sufficient for most build strategies.
+# If Buildah builds require privileged, this can be upgraded per-profile.
 - apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
   metadata:
-    name: scc-privileged-${STUDENT_NAME}
+    name: scc-anyuid-${STUDENT_NAME}
     labels:
       student: ${STUDENT_NAME}
       workshop: "devops"
@@ -221,12 +223,9 @@ objects:
   - kind: ServiceAccount
     name: pipeline
     namespace: ${STUDENT_NAME}
-  - kind: ServiceAccount
-    name: default
-    namespace: ${STUDENT_NAME}
   roleRef:
     kind: ClusterRole
-    name: system:openshift:scc:privileged
+    name: system:openshift:scc:anyuid
     apiGroup: rbac.authorization.k8s.io
 
 # Enhanced code-server deployment
@@ -343,10 +342,10 @@ parameters:
   required: true
 - name: STUDENT_PASSWORD
   description: Password for code-server access
-  value: "DevOps2025!"
+  required: true
 - name: IMAGE_NAME
   description: Code-server image name
-  value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:latest
+  value: image-registry.openshift-image-registry.svc:5000/devops/code-server-student:v1.0.0
 - name: STORAGE_SIZE
   description: PVC storage size
   value: 1Gi
@@ -372,5 +371,5 @@ parameters:
   description: Instructor contact email
   value: "instructor@workshop.example.com"
 - name: ARGOCD_SERVER_URL
-  description: ArgoCD server URL for Day 3 GitOps
-  value: "openshift-gitops-server-openshift-gitops.apps.bootcamp-ocs-cluster.bootcamp.tkmind.net"
+  description: ArgoCD server URL for Day 3 GitOps (typically openshift-gitops-server-openshift-gitops.${CLUSTER_DOMAIN})
+  required: true
