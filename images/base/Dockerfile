@@ -1,19 +1,5 @@
-# Training Platform Base Image
-# This builds the base image with core system tools.
-# Profile-specific tools are delivered via init container tool-packs at runtime.
-#
-# For the original all-in-one image, use Dockerfile.monolith
-#
-# Build:
-#   docker build -t training-platform-base:v1.0.0 .
-#
-# For tool-pack images:
-#   docker build -t tool-pack-cloud-native:v1.0.0 images/tool-packs/cloud-native/
-#   docker build -t tool-pack-java:v1.0.0 images/tool-packs/java/
-#   docker build -t tool-pack-nodejs:v1.0.0 images/tool-packs/nodejs/
-#   docker build -t tool-pack-python:v1.0.0 images/tool-packs/python/
-#   docker build -t tool-pack-iac:v1.0.0 images/tool-packs/iac/
-
+# Base training platform image - code-server + core system tools
+# Profile-specific tools are delivered via init container tool-packs
 ARG CODE_SERVER_VERSION=4.109.2
 FROM ghcr.io/coder/code-server:${CODE_SERVER_VERSION}
 
@@ -50,7 +36,7 @@ RUN mkdir -p /home/coder/workspace/projects \
 
 # Copy base config files
 COPY gitconfig-template /home/coder/.gitconfig-template
-COPY images/base/startup.sh /home/coder/startup.sh
+COPY startup.sh /home/coder/startup.sh
 
 # Set permissions (OpenShift-compatible: group 0 gets user permissions)
 RUN chmod +x /home/coder/startup.sh && \

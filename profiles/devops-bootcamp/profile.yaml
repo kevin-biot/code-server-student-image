@@ -1,0 +1,110 @@
+apiVersion: training.platform/v1alpha1
+kind: TrainingProfile
+metadata:
+  name: devops-bootcamp
+  description: "3-day DevOps bootcamp: Pulumi IaC, Tekton CI/CD, ArgoCD GitOps"
+  version: "1.0.0"
+  tags: [devops, pulumi, tekton, argocd, openshift, java, nodejs, python]
+
+spec:
+  toolPacks:
+    - cloud-native
+    - java
+    - nodejs
+    - python
+    - iac
+
+  extensions:
+    - redhat.vscode-yaml
+    - ms-vscode.vscode-typescript-next
+
+  content:
+    configMapName: devops-bootcamp-content
+    files:
+      - source: welcome-readme.md
+        destination: workspace/README.md
+      - source: labs-readme.md
+        destination: workspace/labs/README.md
+      - source: day1-pulumi-readme.md
+        destination: workspace/labs/day1-pulumi/README.md
+      - source: day2-tekton-readme.md
+        destination: workspace/labs/day2-tekton/README.md
+      - source: day3-gitops-readme.md
+        destination: workspace/labs/day3-gitops/README.md
+
+  directoryStructure:
+    - workspace/projects
+    - workspace/labs/day1-pulumi
+    - workspace/labs/day2-tekton
+    - workspace/labs/day3-gitops
+    - workspace/examples/kubernetes
+    - workspace/examples/tekton
+    - workspace/examples/pulumi
+    - workspace/examples/shipwright
+    - workspace/examples/argocd
+    - workspace/templates
+
+  startupScripts:
+    - 00-base-setup.sh
+    - 10-openshift-login.sh
+    - 20-create-content.sh
+    - 30-shell-env.sh
+
+  envVars:
+    PULUMI_SKIP_UPDATE_CHECK: "true"
+    PULUMI_SKIP_CONFIRMATIONS: "true"
+    ARGOCD_OPTS: "--insecure --grpc-web"
+
+  resources:
+    quotas:
+      requests.cpu: "2"
+      requests.memory: 4Gi
+      limits.cpu: "4"
+      limits.memory: 8Gi
+      pods: "15"
+      services: "10"
+      secrets: "20"
+      configmaps: "20"
+      persistentvolumeclaims: "5"
+      requests.storage: 20Gi
+    limits:
+      defaultCpu: 500m
+      defaultMemory: 1Gi
+      defaultRequestCpu: 100m
+      defaultRequestMemory: 256Mi
+      maxCpu: "2"
+      maxMemory: 4Gi
+
+  containerResources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: 800m
+      memory: 1200Mi
+
+  networkPolicies:
+    allowNamespaces:
+      - openshift-ingress
+      - openshift-monitoring
+      - openshift-gitops
+
+  rbac:
+    additionalRoleBindings:
+      - namespace: openshift-gitops
+        subjects:
+          - kind: ServiceAccount
+            name: openshift-gitops-argocd-server
+          - kind: ServiceAccount
+            name: openshift-gitops-argocd-application-controller
+        roleRef: admin
+    sccLevel: anyuid
+
+  storage:
+    workspacePvcSize: 1Gi
+    storageClass: gp3-csi
+    additionalPvcs:
+      - name: shared-pvc
+        size: 1Gi
+        labels:
+          app: tekton

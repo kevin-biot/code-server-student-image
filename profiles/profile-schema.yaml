@@ -1,0 +1,96 @@
+# TrainingProfile Schema
+# Defines the structure for training course profiles.
+# Each profile specifies the tools, content, resources, and configuration
+# needed for a specific training course.
+#
+# Profiles are consumed by:
+#   - deploy/generate-overlay.sh to produce per-student Kustomize overlays
+#   - admin-workflow.sh for profile-aware deployment and validation
+#   - management-server API for web-based course setup
+
+apiVersion: training.platform/v1alpha1
+kind: TrainingProfile
+
+# Required fields
+metadata:
+  name: string           # Unique profile identifier (e.g., "devops-bootcamp")
+  description: string    # Human-readable course description
+  version: string        # Profile version (semver)
+  tags: [string]         # Searchable tags
+
+spec:
+  # Tool packs to load as init containers
+  # Each name maps to images/tool-packs/<name>/
+  toolPacks: [string]    # e.g., [cloud-native, java, nodejs, python, iac]
+
+  # VS Code extensions to install
+  extensions: [string]   # e.g., [redhat.vscode-yaml, ms-vscode.vscode-typescript-next]
+
+  # Course content configuration
+  content:
+    configMapName: string           # Name for the generated ConfigMap
+    files:                          # Content files to include
+      - source: string             # Path relative to profile content/ dir
+        destination: string         # Path inside the container workspace
+
+  # Directory structure to create in workspace
+  directoryStructure: [string]     # e.g., [labs/day1-pulumi, labs/day2-tekton]
+
+  # Startup scripts (from profile startup.d/ dir)
+  # Mounted into /home/coder/startup.d/ and run in sorted order
+  startupScripts: [string]         # e.g., [00-base-setup.sh, 10-openshift-login.sh]
+
+  # Environment variables injected into the code-server container
+  envVars:
+    KEY: string                    # e.g., PULUMI_SKIP_UPDATE_CHECK: "true"
+
+  # Kubernetes resource configuration
+  resources:
+    quotas:
+      requests.cpu: string
+      requests.memory: string
+      limits.cpu: string
+      limits.memory: string
+      pods: string
+      services: string
+      secrets: string
+      configmaps: string
+      persistentvolumeclaims: string
+      requests.storage: string
+    limits:
+      defaultCpu: string
+      defaultMemory: string
+      defaultRequestCpu: string
+      defaultRequestMemory: string
+      maxCpu: string
+      maxMemory: string
+
+  # Container resource requests/limits
+  containerResources:
+    requests:
+      cpu: string
+      memory: string
+    limits:
+      cpu: string
+      memory: string
+
+  # Network policies
+  networkPolicies:
+    allowNamespaces: [string]      # Additional namespace selectors to allow ingress from
+
+  # RBAC configuration
+  rbac:
+    additionalRoleBindings:
+      - namespace: string          # Target namespace for the binding
+        subjects: [object]         # ServiceAccount references
+        roleRef: string            # ClusterRole name
+    sccLevel: string               # anyuid | restricted (default: anyuid)
+
+  # Storage configuration
+  storage:
+    workspacePvcSize: string       # e.g., "1Gi"
+    storageClass: string           # e.g., "gp3-csi"
+    additionalPvcs:
+      - name: string
+        size: string
+        labels: {string: string}
