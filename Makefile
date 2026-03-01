@@ -1,105 +1,114 @@
-# Makefile for Code Server Student Image
+# Makefile for Training Platform
+# Supports: base image, tool-pack images, profile-based deployment, testing
 
-# Variables
-IMAGE_NAME ?= code-server-student
-IMAGE_TAG ?= latest
+# Image configuration
+IMAGE_NAME ?= training-platform-base
+IMAGE_TAG ?= v1.0.0
 REGISTRY ?= image-registry.openshift-image-registry.svc:5000/devops
-FULL_IMAGE_NAME = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
-CLUSTER_DOMAIN ?= apps.cluster.local
+FULL_IMAGE = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
+CLUSTER_DOMAIN ?= $(error Set CLUSTER_DOMAIN=apps.your-cluster.example.com)
 
-# Default number of students for testing
-STUDENT_COUNT ?= 3
+# Student configuration
+PROFILE ?= devops-bootcamp
+START ?= 1
+END ?= 5
 
-.PHONY: help build deploy clean monitor test
+.PHONY: help build build-base build-tools build-all deploy deploy-profile \
+        test test-profiles test-lint test-base-image \
+        list-profiles status clean monitor
+
+# ---- Help ----
 
 help: ## Show this help message
-	@echo "Code Server Student Image - Makefile"
-	@echo
+	@echo "Training Platform - Makefile"
+	@echo ""
 	@echo "Available targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Common workflows:"
+	@echo "  make build-base                          Build base image"
+	@echo "  make test-profiles                       Validate all profiles"
+	@echo "  make test-lint                            Lint all scripts"
+	@echo "  make deploy-profile PROFILE=java-dev END=5  Deploy with profile"
 
-build: ## Build the code-server image using Shipwright
-	@echo "Building code-server student image..."
-	oc apply -f shipwright/build.yaml
-	oc create -f shipwright/buildrun.yaml
-	@echo "Build initiated. Monitor with: oc logs -f buildrun/code-server-student-image-xxxxx -n devops"
+# ---- Build ----
 
-deploy: ## Deploy student environments (use STUDENT_COUNT=N to specify number)
-	@echo "Deploying $(STUDENT_COUNT) student environments..."
-	chmod +x deploy-students.sh
-	./deploy-students.sh -n $(STUDENT_COUNT) -d $(CLUSTER_DOMAIN)
-
-deploy-specific: ## Deploy specific students (use STUDENTS="name1,name2,name3")
-	@echo "Deploying specific students: $(STUDENTS)"
-	chmod +x deploy-students.sh
-	./deploy-students.sh -s $(STUDENTS) -d $(CLUSTER_DOMAIN)
-
-monitor: ## Monitor student environment status
-	@echo "Monitoring student environments..."
-	chmod +x monitor-students.sh
-	./monitor-students.sh
-
-clean: ## Clean up all student environments
-	@echo "Cleaning up student environments..."
-	chmod +x deploy-students.sh
-	./deploy-students.sh -n $(STUDENT_COUNT) --cleanup
-
-clean-all: ## Clean up ALL student environments (be careful!)
-	@echo "WARNING: This will delete ALL student namespaces!"
-	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ]
-	oc get namespaces -l student --no-headers -o custom-columns=":metadata.name" | xargs -I {} oc delete namespace {}
-
-test: ## Run syntax checks and test deployment with a small number of students
-	@echo "Running shell script syntax checks..."
-	@command -v shellcheck >/dev/null 2>&1 && \
-	shellcheck deploy-students.sh monitor-students.sh git-push.sh startup.sh || \
-	bash -n deploy-students.sh monitor-students.sh git-push.sh startup.sh
-	@echo "Testing with 2 student environments..."
-	$(MAKE) STUDENT_COUNT=2 deploy
-	sleep 30
-	$(MAKE) monitor
-	@echo "Test complete. Clean up with: make STUDENT_COUNT=2 clean"
-
-logs: ## Show recent logs from student environments
-	@echo "Recent logs from student pods..."
-	@for ns in $$(oc get namespaces -l student --no-headers -o custom-columns=":metadata.name" | head -5); do \
-		echo "=== Logs for $$ns ==="; \
-		oc logs -n $$ns deployment/code-server --tail=10 2>/dev/null || echo "No logs available"; \
-		echo; \
-	done
-
-status: ## Quick status check
-	@echo "Quick status check..."
-	@echo "Student namespaces: $$(oc get namespaces -l student --no-headers | wc -l)"
-	@echo "Running pods: $$(oc get pods -A -l app=code-server --no-headers | grep Running | wc -l)"
-	@echo "Failed pods: $$(oc get pods -A -l app=code-server --no-headers | grep -v Running | grep -v Completed | wc -l)"
-
-backup: ## Create backup of student credentials
-	@echo "Creating backup of student credentials..."
-	@if [ -f student-credentials.txt ]; then \
-		cp student-credentials.txt student-credentials-backup-$$(date +%Y%m%d-%H%M%S).txt; \
-		echo "Backup created: student-credentials-backup-$$(date +%Y%m%d-%H%M%S).txt"; \
-	else \
-		echo "No credentials file found"; \
-	fi
-
-# Development targets
-dev-build: ## Build image locally with Docker/Podman
+build-base: ## Build the base training platform image
 	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-dev-test: ## Test the image locally
-	docker run -it --rm -p 8080:8080 $(IMAGE_NAME):$(IMAGE_TAG)
+build-tool-cloud-native: ## Build cloud-native tool-pack image
+	docker build -t tool-pack-cloud-native:$(IMAGE_TAG) images/tool-packs/cloud-native/
 
-# Template management
-template-install: ## Install the student template in OpenShift
-	oc apply -f student-template.yaml
+build-tool-java: ## Build Java tool-pack image
+	docker build -t tool-pack-java:$(IMAGE_TAG) images/tool-packs/java/
 
-template-remove: ## Remove the student template from OpenShift
-	oc delete template code-server-student -n devops --ignore-not-found=true
+build-tool-nodejs: ## Build Node.js tool-pack image
+	docker build -t tool-pack-nodejs:$(IMAGE_TAG) images/tool-packs/nodejs/
 
-# Examples
-example-deploy-class: ## Example: Deploy a class of 20 students
-	$(MAKE) STUDENT_COUNT=20 CLUSTER_DOMAIN=apps.ocp4.example.com deploy
+build-tool-python: ## Build Python tool-pack image
+	docker build -t tool-pack-python:$(IMAGE_TAG) images/tool-packs/python/
 
-example-deploy-workshop: ## Example: Deploy workshop participants
-	$(MAKE) STUDENTS="alice,bob,charlie,diana,eve" deploy-specific
+build-tool-iac: ## Build IaC (Pulumi) tool-pack image
+	docker build -t tool-pack-iac:$(IMAGE_TAG) images/tool-packs/iac/
+
+build-tools: build-tool-cloud-native build-tool-java build-tool-nodejs build-tool-python build-tool-iac ## Build all tool-pack images
+
+build-all: build-base build-tools ## Build base + all tool-pack images
+
+build-monolith: ## Build the legacy monolith image
+	docker build -f Dockerfile.monolith -t code-server-student:$(IMAGE_TAG) .
+
+# ---- Deploy ----
+
+deploy-profile: ## Deploy students with a profile (PROFILE=name START=1 END=5)
+	./admin/deploy/deploy-profile.sh \
+		--profile $(PROFILE) \
+		--start $(START) \
+		--end $(END) \
+		--domain $(CLUSTER_DOMAIN)
+
+deploy-profile-dry: ## Dry-run deploy (generate overlays without applying)
+	./admin/deploy/deploy-profile.sh \
+		--profile $(PROFILE) \
+		--start $(START) \
+		--end $(END) \
+		--domain $(CLUSTER_DOMAIN) \
+		--dry-run
+
+deploy-legacy: ## Deploy using legacy OpenShift Template
+	./admin/deploy/complete-student-setup-simple.sh $(START) $(END)
+
+# ---- Test ----
+
+test-profiles: ## Validate all training profiles
+	./tests/test-profile.sh
+
+test-lint: ## Run lint checks (shell, YAML, secrets, Dockerfiles)
+	./tests/lint.sh
+
+test-base-image: build-base ## Build and test the base image
+	./tests/test-base-image.sh $(IMAGE_NAME):$(IMAGE_TAG)
+
+test: test-lint test-profiles ## Run all local tests (lint + profiles)
+
+# ---- Profiles ----
+
+list-profiles: ## List available training profiles
+	@./admin/admin-workflow.sh profiles
+
+# ---- Operations ----
+
+status: ## Quick cluster status
+	@./admin/admin-workflow.sh status
+
+monitor: ## Monitor student environments
+	@./admin/admin-workflow.sh manage monitor
+
+clean: ## Teardown student environments (interactive)
+	./admin/admin-workflow.sh manage teardown
+
+# ---- Legacy ----
+
+build: build-monolith ## Alias: build monolith image
+
+deploy: deploy-legacy ## Alias: legacy deploy
