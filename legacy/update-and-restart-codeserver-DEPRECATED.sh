@@ -1,5 +1,38 @@
 #!/bin/bash
 # ------------------------------------------------------------------
+# DEPRECATED SCRIPT - DO NOT USE
+# ------------------------------------------------------------------
+# This script has been DEPRECATED and moved to legacy/
+# 
+# PROBLEMS WITH THIS SCRIPT:
+# - Combines build + restart operations (violates separation of concerns)
+# - No batch processing for large deployments (37+ servers fail)
+# - No PVC lock detection/cleanup (ghost node issues)
+# - No proper image pull policy (cache issues)
+# - Missing production safety features
+#
+# REPLACEMENTS:
+# 1. Build Phase: use build-and-verify.sh (separate step)
+# 2. Restart Phase: ./admin-workflow.sh manage restart
+#    (uses restart-codeserver-enhanced.sh with all production fixes)
+#
+# DO NOT USE THIS SCRIPT IN PRODUCTION!
+# ------------------------------------------------------------------
+
+echo "❌ DEPRECATED SCRIPT - DO NOT USE!"
+echo ""
+echo "This script has been deprecated due to production issues:"
+echo "• No batch processing (fails with 37+ servers)"
+echo "• No PVC lock detection (ghost node issues)"
+echo "• Mixes build + restart operations"
+echo ""
+echo "✅ Use instead:"
+echo "   1. Build: ./build-and-verify.sh"
+echo "   2. Restart: ./admin/admin-workflow.sh manage restart"
+echo ""
+exit 1
+
+# ------------------------------------------------------------------
 # Rebuild code-server image and restart existing deployments
 # This preserves passwords and other configurations while updating
 # the image with the new README file
