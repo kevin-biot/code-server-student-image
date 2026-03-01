@@ -1,0 +1,17 @@
+# SCC binding for pipeline ServiceAccount
+# Using anyuid — sufficient for most build strategies.
+# Upgrade to privileged per-profile if Buildah requires it.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: scc-anyuid-STUDENT_NAME
+  labels:
+    cleanup: required
+subjects:
+- kind: ServiceAccount
+  name: pipeline
+  namespace: STUDENT_NAME
+roleRef:
+  kind: ClusterRole
+  name: system:openshift:scc:anyuid
+  apiGroup: rbac.authorization.k8s.io

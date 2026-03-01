@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: STUDENT_NAME
+  labels:
+    student: STUDENT_NAME
+    workshop: training
+    environment: training

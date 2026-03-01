@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: student-network-policy
+spec:
+  ingress:
+  # Base rules
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-monitoring
+  - from:
+    - podSelector: {}
+  # DevOps-specific: allow ArgoCD access for Day 3
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-gitops

@@ -1,0 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - shared-pvc.yaml
+  - gitops-rbac.yaml
+  - scc-binding.yaml
+
+patches:
+  - path: deployment-patch.yaml
+  - path: quota-patch.yaml
+  - path: limit-range-patch.yaml
+  - path: network-policy-patch.yaml
+
+# Profile startup scripts mounted as ConfigMap
+configMapGenerator:
+  - name: startup-scripts
+    files:
+      - 00-base-setup.sh=startup.d/00-base-setup.sh
+      - 10-openshift-login.sh=startup.d/10-openshift-login.sh
+      - 20-create-content.sh=startup.d/20-create-content.sh
+      - 30-shell-env.sh=startup.d/30-shell-env.sh
+  - name: course-content
+    files:
+      - welcome-readme.md=content/welcome-readme.md
+      - labs-readme.md=content/labs-readme.md
+      - day1-pulumi-readme.md=content/day1-pulumi-readme.md
+      - day2-tekton-readme.md=content/day2-tekton-readme.md
+      - day3-gitops-readme.md=content/day3-gitops-readme.md
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+labels:
+  - pairs:
+      workshop: devops
+      profile: devops-bootcamp

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: tool-pack-cloud-native
+        image: tool-pack-cloud-native:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      - name: tool-pack-java
+        image: tool-pack-java:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      containers:
+      - name: code-server
+        volumeMounts:
+        - name: course-content
+          mountPath: /home/coder/course-content
+      volumes:
+      - name: course-content
+        configMap:
+          name: course-content

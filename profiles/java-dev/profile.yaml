@@ -1,0 +1,75 @@
+apiVersion: training.platform/v1alpha1
+kind: TrainingProfile
+metadata:
+  name: java-dev
+  description: "Java development environment with cloud-native tooling"
+  version: "1.0.0"
+  tags: [java, spring-boot, maven, gradle, kubernetes]
+
+spec:
+  toolPacks:
+    - cloud-native
+    - java
+
+  extensions:
+    - redhat.vscode-yaml
+    - redhat.java
+    - vscjava.vscode-maven
+
+  content:
+    configMapName: java-dev-content
+    files:
+      - source: welcome-readme.md
+        destination: workspace/README.md
+
+  directoryStructure:
+    - workspace/projects
+    - workspace/labs
+    - workspace/examples/java
+    - workspace/examples/kubernetes
+
+  startupScripts:
+    - 00-base-setup.sh
+    - 10-openshift-login.sh
+
+  envVars: {}
+
+  resources:
+    quotas:
+      requests.cpu: "1"
+      requests.memory: 2Gi
+      limits.cpu: "2"
+      limits.memory: 4Gi
+      pods: "10"
+      services: "5"
+      secrets: "10"
+      configmaps: "10"
+      persistentvolumeclaims: "3"
+      requests.storage: 10Gi
+    limits:
+      defaultCpu: 500m
+      defaultMemory: 512Mi
+      defaultRequestCpu: 100m
+      defaultRequestMemory: 128Mi
+      maxCpu: "1"
+      maxMemory: 2Gi
+
+  containerResources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  networkPolicies:
+    allowNamespaces:
+      - openshift-ingress
+      - openshift-monitoring
+
+  rbac:
+    sccLevel: anyuid
+
+  storage:
+    workspacePvcSize: 1Gi
+    storageClass: gp3-csi

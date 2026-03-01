@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server
+spec:
+  template:
+    metadata:
+      annotations:
+        workshop.devops/tools: "pulumi,tekton,argocd,java,nodejs,python"
+    spec:
+      # Init containers copy tool-pack binaries into shared emptyDir
+      initContainers:
+      - name: tool-pack-cloud-native
+        image: tool-pack-cloud-native:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      - name: tool-pack-java
+        image: tool-pack-java:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      - name: tool-pack-nodejs
+        image: tool-pack-nodejs:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      - name: tool-pack-python
+        image: tool-pack-python:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      - name: tool-pack-iac
+        image: tool-pack-iac:v1.0.0
+        volumeMounts:
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+      containers:
+      - name: code-server
+        env:
+        - name: PULUMI_SKIP_UPDATE_CHECK
+          value: "true"
+        - name: PULUMI_SKIP_CONFIRMATIONS
+          value: "true"
+        - name: ARGOCD_SERVER
+          value: ARGOCD_SERVER_URL
+        - name: ARGOCD_OPTS
+          value: "--insecure --grpc-web"
+        resources:
+          requests:
+            cpu: 300m
+            memory: 512Mi
+          limits:
+            cpu: 800m
+            memory: 1200Mi
+        volumeMounts:
+        - name: course-content
+          mountPath: /home/coder/course-content
+      volumes:
+      - name: course-content
+        configMap:
+          name: course-content

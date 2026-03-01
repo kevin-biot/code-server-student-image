@@ -31,6 +31,9 @@ student-credentials.txt
 student-credentials-*.txt
 *.htpasswd
 
+# Generated per-student overlays (created by deploy/generate-overlay.sh)
+deploy/generated/
+
 # Ignore any local test files
 test-*.txt
 test-*.log

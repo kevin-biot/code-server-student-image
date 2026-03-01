@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server
+  labels:
+    app: code-server
+    component: development-environment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: code-server
+  template:
+    metadata:
+      labels:
+        app: code-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: code-server
+        image: training-platform-base:v1.0.0
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - "ALL"
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+        - name: PASSWORD
+          value: STUDENT_PASSWORD
+        - name: STUDENT_NAMESPACE
+          value: STUDENT_NAME
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: data
+          mountPath: /home/coder/workspace
+        - name: tool-packs
+          mountPath: /opt/tool-packs
+        - name: startup-scripts
+          mountPath: /home/coder/startup.d
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: code-server-pvc
+      - name: tool-packs
+        emptyDir: {}
+      - name: startup-scripts
+        configMap:
+          name: startup-scripts
+          defaultMode: 0755

@@ -1,3 +1,8 @@
+# DEPRECATED: Use Kustomize overlays instead.
+# See deploy/base/ for base resources and deploy/overlays/ for profile overlays.
+# Generate per-student overlays: ./deploy/generate-overlay.sh <profile> <student> <domain>
+#
+# This OpenShift Template is kept for backward compatibility.
 # Enhanced student-template.yaml with comprehensive DevOps tooling
 apiVersion: template.openshift.io/v1
 kind: Template

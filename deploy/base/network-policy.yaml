@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: student-network-policy
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow OpenShift ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-ingress
+  # Allow monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-monitoring
+  # Allow same namespace
+  - from:
+    - podSelector: {}
+  egress:
+  # Allow all egress (git, registries, APIs)
+  - {}

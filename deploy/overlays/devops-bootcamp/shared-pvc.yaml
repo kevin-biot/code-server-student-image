@@ -1,0 +1,14 @@
+# PVC used by Tekton pipelines
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-pvc
+  labels:
+    app: tekton
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: gp3-csi

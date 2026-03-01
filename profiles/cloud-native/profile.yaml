@@ -1,0 +1,75 @@
+apiVersion: training.platform/v1alpha1
+kind: TrainingProfile
+metadata:
+  name: cloud-native
+  description: "Cloud-native development with OpenShift, Kubernetes, and Python scripting"
+  version: "1.0.0"
+  tags: [kubernetes, openshift, cloud-native, python, helm]
+
+spec:
+  toolPacks:
+    - cloud-native
+    - python
+
+  extensions:
+    - redhat.vscode-yaml
+    - ms-python.python
+
+  content:
+    configMapName: cloud-native-content
+    files:
+      - source: welcome-readme.md
+        destination: workspace/README.md
+
+  directoryStructure:
+    - workspace/projects
+    - workspace/labs
+    - workspace/examples/kubernetes
+    - workspace/examples/helm
+    - workspace/examples/python
+
+  startupScripts:
+    - 00-base-setup.sh
+    - 10-openshift-login.sh
+
+  envVars: {}
+
+  resources:
+    quotas:
+      requests.cpu: "1"
+      requests.memory: 2Gi
+      limits.cpu: "2"
+      limits.memory: 4Gi
+      pods: "10"
+      services: "5"
+      secrets: "10"
+      configmaps: "10"
+      persistentvolumeclaims: "3"
+      requests.storage: 10Gi
+    limits:
+      defaultCpu: 500m
+      defaultMemory: 512Mi
+      defaultRequestCpu: 100m
+      defaultRequestMemory: 128Mi
+      maxCpu: "1"
+      maxMemory: 2Gi
+
+  containerResources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  networkPolicies:
+    allowNamespaces:
+      - openshift-ingress
+      - openshift-monitoring
+
+  rbac:
+    sccLevel: anyuid
+
+  storage:
+    workspacePvcSize: 1Gi
+    storageClass: gp3-csi

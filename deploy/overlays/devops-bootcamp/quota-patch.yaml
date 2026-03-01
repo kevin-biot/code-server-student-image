@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: student-quota
+spec:
+  hard:
+    # Increased for CI/CD workloads (Tekton pipelines, builds)
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    persistentvolumeclaims: "5"
+    requests.storage: 20Gi
+    pods: "15"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"

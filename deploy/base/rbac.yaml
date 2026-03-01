@@ -1,0 +1,14 @@
+# Grant admin access to default and pipeline service accounts
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: student-admin-binding
+  labels:
+    workshop: training
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io

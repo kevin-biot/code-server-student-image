@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+patches:
+  - path: deployment-patch.yaml
+
+configMapGenerator:
+  - name: startup-scripts
+    files:
+      - 00-base-setup.sh=startup.d/00-base-setup.sh
+      - 10-openshift-login.sh=startup.d/10-openshift-login.sh
+  - name: course-content
+    files:
+      - welcome-readme.md=content/welcome-readme.md
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+labels:
+  - pairs:
+      workshop: cloud-native
+      profile: cloud-native

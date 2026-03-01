@@ -1,0 +1,13 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: code-server
+spec:
+  host: STUDENT_NAME-code-server.CLUSTER_DOMAIN
+  to:
+    kind: Service
+    name: code-server
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
