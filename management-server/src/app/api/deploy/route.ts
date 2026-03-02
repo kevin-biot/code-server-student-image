@@ -4,10 +4,16 @@ import {
   type CreateResult,
 } from "@/lib/openshift";
 import { getProfile } from "@/lib/profiles";
+import { requireAdminMutationAuth } from "@/lib/api-auth";
 import type { DeployRequest } from "@/lib/types";
 
 // POST /api/deploy — bulk deploy students with a profile via k8s API
 export async function POST(request: NextRequest) {
+  const authError = requireAdminMutationAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const body = (await request.json()) as DeployRequest;
 
   const profile = getProfile(body.profile);

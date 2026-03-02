@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { restartStudentPod } from "@/lib/openshift";
+import { requireAdminMutationAuth } from "@/lib/api-auth";
 
 const STUDENT_NAMESPACE_RE = /^student\d+$/;
 
 // POST /api/students/[ns]/restart — restart the code-server pod
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ ns: string }> }
 ) {
+  const authError = requireAdminMutationAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const { ns } = await params;
   if (!STUDENT_NAMESPACE_RE.test(ns)) {
     return NextResponse.json(

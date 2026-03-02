@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listStudents, createStudentEnvironment } from "@/lib/openshift";
 import { getProfile } from "@/lib/profiles";
+import { requireAdminMutationAuth } from "@/lib/api-auth";
 import type { DeployRequest } from "@/lib/types";
 
 // GET /api/students — list all student environments
@@ -11,6 +12,11 @@ export async function GET() {
 
 // POST /api/students — deploy student environments via k8s API
 export async function POST(request: NextRequest) {
+  const authError = requireAdminMutationAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const body = (await request.json()) as DeployRequest;
 
   if (!body.profile || !body.clusterDomain || !body.password) {

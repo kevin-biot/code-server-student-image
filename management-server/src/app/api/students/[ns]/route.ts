@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStudentStatus, deleteStudentEnvironment } from "@/lib/openshift";
+import { requireAdminMutationAuth } from "@/lib/api-auth";
 
 const STUDENT_NAMESPACE_RE = /^student\d+$/;
 
@@ -23,9 +24,14 @@ export async function GET(
 
 // DELETE /api/students/[ns] — delete a student environment via k8s API
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ ns: string }> }
 ) {
+  const authError = requireAdminMutationAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const { ns } = await params;
   if (!STUDENT_NAMESPACE_RE.test(ns)) {
     return NextResponse.json(
