@@ -68,6 +68,13 @@ Run the helper script inside a student terminal to clone the training repositori
 ./clone-workshop-repos.sh
 ```
 
+## Documentation
+
+- `QUICKSTART.md` - Instructor-focused deployment checklist
+- `STUDENT-QUICK-START.md` - Student onboarding guide shown in workspace
+- `admin/README.md` - Admin workflow entry point
+- `docs/archive/` - Historical docs preserved for reference
+
 ## Architecture
 
 ### Image Contents
@@ -114,24 +121,22 @@ admin/
 - **Pods**: Maximum 5 pods per namespace
 
 ### Customization
-- Modify `student-template.yaml` to adjust resources or add components
-- Update `Dockerfile` to include additional tools or languages
+- Modify `admin/student-template.yaml` to adjust resource defaults
+- Update `Dockerfile` for base image changes or `images/tool-packs/` for runtime tools
 - The `Dockerfile` creates `/home/coder/workspace/...` directories as `root`
-  before switching to user `1001`.
-- Edit `startup.sh` to customize the welcome experience
+  before switching to non-root execution.
+- Edit `images/base/startup.sh` (or profile startup scripts) to customize welcome behavior
 
 ## Files
 
-- `Dockerfile` - Enhanced code-server image with development tools
-- `student-template.yaml` - OpenShift template for multi-student deployment
-- `deploy-students.sh` - Management script for student environments
-- `startup.sh` - Custom startup script with welcome message
-- `gitconfig-template` - Git configuration template
-- `shipwright/` - Build automation configuration
-- Legacy files (for reference):
-  - `code-server-*.yaml` - Original single-student deployment
-  - `htpasswd-oauth.yaml` - OAuth configuration
-  - `users.htpasswd` - User authentication
+- `Dockerfile` - Current base image (tool-packs delivered at runtime)
+- `Dockerfile.monolith` - Legacy all-in-one image definition
+- `images/base/startup.sh` - Current base startup behavior
+- `startup.sh` - Legacy startup script used by monolithic workflow
+- `admin/` - Deployment, management, and validation scripts
+- `deploy/` - Kustomize overlays and deployment assets
+- `profiles/` - Profile-specific startup and content
+- `legacy/` and `docs/archive/` - Historical scripts and docs
 
 ## Security Features
 

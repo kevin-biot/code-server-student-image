@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listStudents } from "@/lib/openshift";
-import { deployStudents } from "@/lib/admin-scripts";
+import { listStudents, createStudentEnvironment } from "@/lib/openshift";
+import { getProfile } from "@/lib/profiles";
 import type { DeployRequest } from "@/lib/types";
 
 // GET /api/students — list all student environments
@@ -9,7 +9,7 @@ export async function GET() {
   return NextResponse.json(students);
 }
 
-// POST /api/students — deploy student environments
+// POST /api/students — deploy student environments via k8s API
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as DeployRequest;
 
@@ -20,25 +20,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const req: DeployRequest = {
-    profile: body.profile,
-    startNum: body.startNum || 1,
-    endNum: body.endNum || 5,
-    clusterDomain: body.clusterDomain,
-    password: body.password,
-  };
-
-  const result = await deployStudents(req);
-
-  if (result.success) {
-    return NextResponse.json({
-      message: `Deployed students ${req.startNum}-${req.endNum} with profile ${req.profile}`,
-      stdout: result.stdout,
-    });
+  const profile = getProfile(body.profile);
+  if (!profile) {
+    return NextResponse.json(
+      { error: `Profile '${body.profile}' not found` },
+      { status: 404 }
+    );
   }
 
-  return NextResponse.json(
-    { error: "Deployment failed", stderr: result.stderr, stdout: result.stdout },
-    { status: 500 }
-  );
+  const startNum = body.startNum || 1;
+  const endNum = body.endNum || 5;
+  const results = [];
+
+  for (let i = startNum; i <= endNum; i++) {
+    const name = `student${String(i).padStart(2, "0")}`;
+    const result = await createStudentEnvironment({
+      name,
+      profile: body.profile,
+      clusterDomain: body.clusterDomain,
+      password: body.password,
+      spec: profile.spec,
+    });
+    results.push(result);
+  }
+
+  const succeeded = results.filter((r) => r.success).length;
+
+  return NextResponse.json({
+    message: `Deployed ${succeeded}/${results.length} students with profile ${body.profile}`,
+    results,
+  });
 }

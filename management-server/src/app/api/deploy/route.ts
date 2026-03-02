@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deployStudents } from "@/lib/admin-scripts";
+import {
+  createStudentEnvironment,
+  type CreateResult,
+} from "@/lib/openshift";
 import { getProfile } from "@/lib/profiles";
 import type { DeployRequest } from "@/lib/types";
 
-// POST /api/deploy — bulk deploy students with a profile
+// POST /api/deploy — bulk deploy students with a profile via k8s API
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as DeployRequest;
 
-  // Validate profile exists
   const profile = getProfile(body.profile);
   if (!profile) {
     return NextResponse.json(
@@ -30,21 +32,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const req: DeployRequest = {
-    profile: body.profile,
-    startNum: body.startNum || 1,
-    endNum: body.endNum || 5,
-    clusterDomain: body.clusterDomain,
-    password: body.password,
-  };
+  const startNum = body.startNum || 1;
+  const endNum = body.endNum || 5;
+  const results: CreateResult[] = [];
 
-  const result = await deployStudents(req);
+  for (let i = startNum; i <= endNum; i++) {
+    const name = `student${String(i).padStart(2, "0")}`;
+    const result = await createStudentEnvironment({
+      name,
+      profile: body.profile,
+      clusterDomain: body.clusterDomain,
+      password: body.password,
+      spec: profile.spec,
+    });
+    results.push(result);
+  }
+
+  const succeeded = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success);
 
   return NextResponse.json({
-    success: result.success,
     profile: profile.metadata.name,
-    students: { start: req.startNum, end: req.endNum },
-    stdout: result.stdout,
-    stderr: result.stderr,
+    total: results.length,
+    succeeded,
+    failed: failed.length,
+    results,
   });
 }

@@ -45,9 +45,9 @@ echo "This will rebuild the code-server image with the new README and restart ex
 echo
 
 # Check if required files exist (relative to repository root)
-if [[ ! -f "../../Dockerfile" ]] || [[ ! -f "../../day2-tekton-README.md" ]]; then
+if [[ ! -f "../../Dockerfile" ]] || [[ ! -f "../../docs/archive/day2-tekton-README.md" ]]; then
     echo "❌ Error: Required files not found"
-    echo "   Expected files: ../../Dockerfile, ../../day2-tekton-README.md"
+    echo "   Expected files: ../../Dockerfile, ../../docs/archive/day2-tekton-README.md"
     echo "   Run this script from admin/manage/ or ensure repository structure is correct"
     exit 1
 fi
@@ -65,7 +65,7 @@ fi
 
 echo "📋 Configuration:"
 echo "   🏷️  Image Name: $FULL_IMAGE_NAME"
-echo "   📂 README Source: day2-tekton-README.md"
+echo "   📂 README Source: docs/archive/day2-tekton-README.md"
 echo "   📁 Target Path: /home/coder/workspace/labs/day2-tekton/README.md"
 echo
 

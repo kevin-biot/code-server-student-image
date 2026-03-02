@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStudentStatus } from "@/lib/openshift";
-import { teardownStudents } from "@/lib/admin-scripts";
+import { getStudentStatus, deleteStudentEnvironment } from "@/lib/openshift";
+
+const STUDENT_NAMESPACE_RE = /^student\d+$/;
 
 // GET /api/students/[ns] — get status for a specific student
 export async function GET(
@@ -20,31 +21,27 @@ export async function GET(
   return NextResponse.json(student);
 }
 
-// DELETE /api/students/[ns] — teardown a student environment
+// DELETE /api/students/[ns] — delete a student environment via k8s API
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ ns: string }> }
 ) {
   const { ns } = await params;
-
-  // Extract student number from namespace (e.g., student03 -> 3)
-  const match = ns.match(/(\d+)$/);
-  if (!match) {
+  if (!STUDENT_NAMESPACE_RE.test(ns)) {
     return NextResponse.json(
       { error: "Invalid student namespace format" },
       { status: 400 }
     );
   }
 
-  const num = parseInt(match[1], 10);
-  const result = await teardownStudents(num, num);
+  const result = await deleteStudentEnvironment(ns);
 
   if (result.success) {
-    return NextResponse.json({ message: `Teardown initiated for ${ns}` });
+    return NextResponse.json({ message: `Deleted namespace ${ns}` });
   }
 
   return NextResponse.json(
-    { error: "Teardown failed", stderr: result.stderr },
+    { error: result.error || "Delete failed" },
     { status: 500 }
   );
 }
